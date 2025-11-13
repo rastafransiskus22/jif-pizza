@@ -1,0 +1,818 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>JIF PIZZA POS v9.9 — Fixed Image Path</title>
+<link rel="icon" href="logo.png"/>
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="JIF POS">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" sizes="192x192" href="logo.png">
+<style>
+/* CSS */
+body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#fff;color:#222}
+.hidden{display:none}
+header.hidden, .navbar.hidden { display: none !important; }
+
+/* LATAR BELAKANG GAMBAR HEADER (Perbarui: pizza.jpg) */
+header{
+  background:url('pizza.jpg') center/cover no-repeat; 
+  color:#fff;
+  padding:12px;
+  text-align:center;
+  position: relative; 
+  z-index: 1; 
+  height: 80px;
+  overflow: hidden; 
+}
+header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7); 
+    z-index: 1; 
+} 
+header h1, header p {
+    position: relative; 
+    z-index: 2; 
+}
+header h1{margin:0;font-size:22px}
+header p{margin:4px 0 0 0;font-size:14px}
+
+/* Gaya Tombol 3D */
+.navbar button, .btn {
+    padding: 10px 16px; 
+    border: none;
+    border-radius: 8px; 
+    cursor: pointer;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08); 
+    background: linear-gradient(145deg, #f0f0f0, #e0e0e0); 
+    color: #333;
+    text-shadow: 0 1px 0 rgba(255,255,255,0.7); 
+}
+.navbar button:hover, .btn:hover {
+    transform: translateY(-1px); 
+    box-shadow: 0 6px 10px rgba(0,0,0,0.15), 0 2px 4px rgba(0,0,0,0.1);
+}
+.navbar button:active, .btn:active {
+    transform: translateY(1px); 
+    box-shadow: 0 2px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.08);
+}
+/* Gaya spesifik untuk tombol primary (merah) */
+.btn.primary, .navbar button.primary-nav { 
+    background: linear-gradient(145deg, #e57373, #d32f2f);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
+}
+.btn.secondary, .navbar button.secondary-nav { 
+    background: linear-gradient(145deg, #64b5f6, #1976d2);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
+}
+.btn.danger, .navbar button.danger-nav { 
+    background: linear-gradient(145deg, #ef5350, #c62828);
+    color: #fff;
+    text-shadow: 0 1px 0 rgba(0,0,0,0.3);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
+}
+
+/* NEW: GAYA TAB AKTIF */
+.navbar button.active-tab {
+    background: linear-gradient(145deg, #d32f2f, #e57373);
+    color: #fff;
+    box-shadow: 0 0 5px rgba(217, 73, 73, 0.7); 
+    transform: none; 
+}
+
+
+.navbar{background:#fff;display:flex;justify-content:center;gap:8px;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.container{padding:14px}
+#loginPage {
+    max-width: 400px; 
+    margin: 40px auto; 
+    padding: 20px;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.menu-item{border:1px solid #ccc;border-radius:8px;padding:8px;text-align:center;cursor:pointer}
+.menu-item {
+    background: #fdfdfd;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.1s ease-in-out;
+}
+.menu-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+}
+.order-box{margin-top:12px;padding:10px;border-top:2px solid #ccc}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal{background:white;padding:20px;border-radius:10px;text-align:center;max-width:320px;width:90%}
+input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;margin:4px 0}
+.report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+.report-table th, .report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+.report-table th { background-color: #f2f2f2; }
+
+/* RESTORED: Gaya Gambar di Home Page (Rapi & Terpusat) */
+#homePage img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    display: block;
+    margin: 0 auto 20px auto; 
+}
+/* Print style untuk 80mm */
+@media print {
+    body { width: 80mm; margin: 0; padding: 0; }
+    pre { width: 80mm !important; max-width: 80mm !important; }
+}
+</style>
+</head>
+<body>
+<header id="appHeader" class="hidden"> 
+  <h1>🍕 JIF PIZZA CONDET</h1>
+  <p id="userRoleDisplay">Mode Offline</p>
+</header>
+<div id="appNavbar" class="navbar hidden"> 
+  <button id="nav-home" class="secondary-nav" onclick="activateTab('home')">Home</button>
+  <button id="nav-kasir" class="secondary-nav" onclick="activateTab('kasir')">Kasir</button>
+  <button id="nav-menu" class="secondary-nav" onclick="activateTab('menu')">Menu</button> 
+  <button id="nav-laporan" class="secondary-nav" onclick="activateTab('laporan');showReport('today')">Laporan</button>
+  <button id="nav-logout" class="secondary-nav" onclick="logout()">Logout</button>
+</div>
+
+<div id="loginPage" class="container">
+  <h2>Login</h2>
+  <input type="email" id="email" placeholder="Email"/>
+  <input type="password" id="password" placeholder="Password"/>
+  <button class="btn primary" onclick="login()">Login</button>
+  <button class="btn secondary" onclick="register()">Daftar (User)</button>
+  <p style="font-size: 0.8em; margin-top: 15px; color: #666;">
+    *Simulasi Role: Akun baru otomatis menjadi Kasir (User).
+    (Akun Manajer sudah terdaftar)
+  </p>
+</div>
+
+<div id="homePage" class="container hidden">
+  <img src="pizza.jpg" alt="JIF Pizza" /> <h2 style="color: #d94949;">Selamat Datang di Jif Pizza!</h2>
+  <p style="line-height: 1.6;">
+    Ini adalah tempat di mana semangat bertemu dengan peluang. Kami percaya pada potensi setiap individu. Gunakan hari-hari Anda di sini untuk belajar, bertumbuh, dan mengukir prestasi. Jadilah bagian dari resep rahasia kesuksesan kami.
+    <br><br>
+    Mari mulai memanggang masa depan yang cerah!
+  </p>
+  <button class="btn primary" onclick="activateTab('kasir')">Mulai Kasir</button>
+</div>
+
+<div id="kasirPage" class="container hidden">
+  <input type="text" id="customerNote" placeholder="Nama Pelanggan/Driver" style="margin-bottom: 10px;"/>
+  <div id="orderLabel"></div>
+  <div class="navbar" style="margin-top: 10px; box-shadow: none; border: 1px solid #eee;">
+    <button class="secondary-nav" onclick="renderMenus('Semua')">Semua</button>
+    <button class="secondary-nav" onclick="renderMenus('Large')">Large</button>
+    <button class="secondary-nav" onclick="renderMenus('Reguler')">Reguler</button>
+    <button class="secondary-nav" onclick="renderMenus('Separuh')">Separuh</button> 
+    <button class="secondary-nav" onclick="renderMenus('Extra')">Extra</button>
+  </div>
+  <div id="menuList" class="menu-grid" style="margin-top: 10px;"></div>
+  <div class="order-box">
+    <h3>Pesanan</h3>
+    <div id="orderList"></div>
+    <h3 id="totalDisplay">Rp 0</h3>
+    <button class="btn primary" onclick="payment()">Bayar & Cetak</button>
+  </div>
+</div>
+
+<div id="menuPage" class="container hidden">
+  <h3>Tambah Menu (Manajer Only)</h3>
+  <input id="mName" placeholder="Nama menu (misal: Mix Lovers)"/>
+  
+  <select id="mCategory">
+    <option value="">-- Pilih Ukuran/Kategori --</option>
+    <option value="Large">Large Pizza</option>
+    <option value="Reguler">Reguler Pizza</option>
+    <option value="Separuh">Separuh Pizza</option> 
+    <option value="Extra">Extra Topping</option>
+  </select>
+  
+  <input id="mPriceOffline" type="number" placeholder="Harga Jual OFFLINE (Rp)"/>
+  <input id="mOnlineMarkup" type="number" placeholder="Markup Harga ONLINE (Rp)"/>
+  
+  <button class="btn primary" onclick="addMenu()">Tambah</button>
+  <div id="menuEditor"></div>
+</div>
+
+<div id="laporanPage" class="container hidden">
+  <h3>Laporan Penjualan</h3>
+  
+  <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
+    <label for="reportDate" style="font-weight: bold;">Pilih Tanggal Spesifik:</label>
+    <input type="date" id="reportDate" style="width: 100%; display: block; margin-bottom: 10px;"/>
+    <button class="btn primary" onclick="showReport(null, true)">Tampilkan Laporan</button>
+  </div>
+  <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+    <button class="btn secondary" onclick="showReport('today')">Hari Ini</button>
+    <button class="btn secondary" onclick="showReport('yesterday')">Kemarin</button>
+    <button class="btn secondary" onclick="showReport('month')">Bulan Ini</button>
+  </div>
+  
+  <p style="font-weight: bold;">Ringkasan:</p>
+  <div id="laporanSummary"></div> 
+  
+  <h4 style="margin-top: 20px;">Sales by Menu (Product Mix)</h4>
+  <div id="salesByMenu"></div>
+
+  <h4 style="margin-top: 20px;">Detail Transaksi</h4>
+  <div id="laporanList"></div>
+</div>
+
+<div class="overlay" id="orderTypeOverlay">
+  <div class="modal">
+    <h3>Pilih Tipe Order</h3>
+    <button class="btn primary" onclick="setOrderType('Online')">Order Online</button>
+    <button class="btn secondary" onclick="setOrderType('Offline')">Order Offline</button>
+  </div>
+</div>
+
+<script>
+// ======================================================================
+// FUNGSI PWA (SERVICE WORKER & A2HS)
+// ======================================================================
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    // Daftarkan Service Worker
+    navigator.serviceWorker.register('/sw.js')
+      .then(registration => {
+        console.log('Service Worker berhasil didaftarkan. Scope:', registration.scope);
+      })
+      .catch(err => {
+        console.log('Gagal mendaftarkan Service Worker:', err);
+      });
+  });
+}
+
+// ======================================================================
+// FUNGSI INTI & UTILITY
+// ======================================================================
+
+const STORE_KEY="jif_pos_v9_9"; /* KEY DIPERBARUI */
+let store=JSON.parse(localStorage.getItem(STORE_KEY)||'{"users":[{"email":"manager@jif.com","password":"123","role":"Manager"}],"menus":[],"transactions":[]}'); 
+let currentUser=JSON.parse(localStorage.getItem('currentUser')) || null; 
+
+let orderType=null;let cart=[];
+
+function saveStore(){localStorage.setItem(STORE_KEY,JSON.stringify(store));}
+function formatRp(n){return "Rp "+(n||0).toLocaleString("id-ID");}
+function $(id){return document.getElementById(id);}
+function getDateOnly(dateString) {
+    const d = new Date(dateString);
+    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+}
+
+function calculatePrice(menu) {
+    if (orderType === 'Online') {
+        return menu.priceOffline + menu.markupOnline;
+    }
+    return menu.priceOffline;
+}
+
+// ======================================================================
+// FUNGSI LOGIN / LOGOUT
+// ======================================================================
+function showLogin(){
+  $("appHeader").classList.remove("hidden");
+  $("appNavbar").classList.add("hidden");
+  ["homePage","kasirPage","menuPage","laporanPage"].forEach(id=>$(id).classList.add("hidden"));
+  $("loginPage").classList.remove("hidden");
+  
+  currentUser = null;
+  localStorage.removeItem('currentUser');
+}
+
+function login(){
+  const email=$("email").value.trim(),pass=$("password").value.trim();
+  const u=store.users.find(x=>x.email===email&&x.password===pass);
+  if(!u)return alert("Email atau password salah");
+  
+  currentUser=u;
+  localStorage.setItem('currentUser', JSON.stringify(currentUser));
+  
+  if(currentUser.role === 'Manager'){
+    $("userRoleDisplay").innerText = `Manajer: ${currentUser.email}`;
+  } else {
+    $("userRoleDisplay").innerText = `Kasir: ${currentUser.email}`;
+  }
+  activateTab('home');
+}
+
+function register(){
+  const email=$("email").value.trim(),pass=$("password").value.trim();
+  if(!email||!pass)return alert("Isi email & password");
+  if(store.users.find(u=>u.email===email))return alert("Email sudah terdaftar");
+  store.users.push({email,password:pass, role:'User'}); 
+  saveStore();
+  alert("Akun Kasir berhasil dibuat! Silakan Login.");
+}
+
+function logout(){
+  if(confirm("Yakin logout & cetak closing report?")){
+    printClosing(); 
+    currentUser=null;
+    localStorage.removeItem('currentUser');
+    cart=[];
+    showLogin();
+  }
+}
+
+// ======================================================================
+// FUNGSI NAVIGASI
+// ======================================================================
+function setActiveTab(tabName) {
+    const navButtons = document.querySelectorAll('#appNavbar button');
+    navButtons.forEach(btn => btn.classList.remove('active-tab'));
+
+    const targetButton = $(`nav-${tabName}`);
+    if (targetButton) {
+        targetButton.classList.add('active-tab');
+    }
+}
+
+function renderAppStructure(){
+  $("appHeader").classList.remove("hidden");
+  $("appNavbar").classList.remove("hidden");
+  ["loginPage"].forEach(id=>$(id).classList.add("hidden"));
+  
+  // Logic untuk menyembunyikan/menampilkan tombol Menu
+  const menuBtn = $("nav-menu");
+  if (menuBtn) {
+    if (currentUser && currentUser.role === 'Manager') {
+      menuBtn.classList.remove('hidden');
+    } else {
+      menuBtn.classList.add('hidden');
+    }
+  }
+}
+
+function showKasir(){
+  openOrderType();
+  renderMenus();
+  renderOrders();
+}
+
+function activateTab(tab){
+  renderAppStructure();
+  
+  ["homePage", "kasirPage","menuPage","laporanPage"].forEach(id=>$(id).classList.add("hidden"));
+  
+  if(tab==="home"){
+    $("homePage").classList.remove("hidden");
+  } else if(tab==="kasir"){
+    $("kasirPage").classList.remove("hidden");
+    showKasir(); 
+  } else if(tab==="menu"){
+    if(currentUser && currentUser.role === 'Manager'){
+      $("menuPage").classList.remove("hidden");
+      renderMenuEditor();
+    } else {
+      alert("Akses ditolak. Fitur Tambah Menu hanya untuk Manajer.");
+      activateTab('home'); 
+      return;
+    }
+  } else if(tab==="laporan"){
+    $("laporanPage").classList.remove("hidden");
+    showReport('today'); 
+  }
+  
+  setActiveTab(tab); 
+}
+// ======================================================================
+// FUNGSI KASIR & TRANSAKSI
+// ======================================================================
+function openOrderType(){$("orderTypeOverlay").style.display="flex";}
+function setOrderType(type){orderType=type;$("orderTypeOverlay").style.display="none";$("orderLabel").innerText="Tipe Order: "+type;}
+function renderMenus(filter = 'Semua'){
+    const root=$("menuList");root.innerHTML="";
+    if(store.menus.length===0){root.innerHTML="<p>Belum ada menu</p>";return;}
+    
+    let filteredMenus = store.menus.filter(m => filter === 'Semua' || m.category === filter);
+    
+    filteredMenus.forEach(m=>{
+        const price = calculatePrice(m);
+        if (price > 0) {
+            const div=document.createElement("div");div.className="menu-item";
+            
+            const itemName = `${m.name} (${m.category})`;
+            
+            div.innerHTML=`<div>${itemName}</div><div>${formatRp(price)}</div>`;
+            div.onclick=()=>addToCart(m, itemName, price); 
+            root.appendChild(div);
+        }
+    });
+}
+
+function addToCart(m, itemName, price){
+    const f=cart.find(i=>i.name===itemName);
+    if(f)f.qty++;
+    else cart.push({
+        name: itemName, 
+        price: price, 
+        qty: 1, 
+        category: m.category,
+        baseMenuName: m.name 
+    }); 
+    renderOrders();
+}
+
+function renderOrders(){const root=$("orderList");root.innerHTML="";if(cart.length===0){root.innerHTML="<p>Belum ada pesanan</p>";$("totalDisplay").innerText="Rp 0";return;}let total=0;cart.forEach(c=>{total+=c.price*c.qty;const d=document.createElement("div");d.className="order-item";d.innerHTML=`<div>${c.name} x${c.qty}</div><div>${formatRp(c.price*c.qty)}</div>`;root.appendChild(d);});$("totalDisplay").innerText=formatRp(total);}
+function payment(){
+    if(cart.length===0)return alert("Belum ada pesanan");
+    const total=cart.reduce((a,b)=>a+b.price*b.qty,0);
+    const bayar=prompt("Total "+formatRp(total)+"\nMasukkan nominal bayar:");
+    if(!bayar)return;
+    const change=bayar-total;
+    alert("Kembalian: "+formatRp(change));
+    
+    const customerNote = $("customerNote").value.trim() || "Tunai"; 
+    
+    saveTransaction(total, customerNote); 
+    printStruk(total,bayar,change, customerNote); 
+    
+    cart=[];
+    renderOrders();
+    $("customerNote").value = ""; 
+    openOrderType();
+}
+
+function saveTransaction(total, customerNote){
+    store.transactions.push({
+        id:Date.now(),
+        user:currentUser.email,
+        orderType,
+        items:[...cart],
+        total,
+        date:new Date().toISOString(),
+        note: customerNote 
+    });
+    saveStore();
+}
+
+// UPDATED: FUNGSI PRINT STRUK KASIR (FIXED 80MM)
+function printStruk(total,bayar,kembali, note){
+    const now = new Date().toLocaleString("id-ID");
+    const MAX_WIDTH = 48; // Karakter maksimal untuk kertas 80mm
+
+    const createStrukLine = (name, qty, price) => {
+        const totalStr = formatRp(price * qty).padStart(12);
+        const namePart = `${name} x${qty}`;
+        const space = MAX_WIDTH - namePart.length - totalStr.length;
+        return `${namePart}${Array(space > 0 ? space : 1).join(' ')}${totalStr}`;
+    };
+    
+    const noteLine = `Pelanggan: ${note.substring(0, MAX_WIDTH - 11)}`; 
+
+    const w=window.open("","_blank");
+    w.document.write(`
+        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 80mm; max-width: 80mm;'>
+🍕 JIF PIZZA CONDET by Adit
+Kasir: ${currentUser.email}
+Tanggal: ${now}
+${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+${cart.map(i => createStrukLine(i.name, i.qty, i.price)).join('\n')}
+${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+Total:        ${formatRp(total).padStart(12)}
+Bayar:        ${formatRp(bayar).padStart(12)}
+Kembali:      ${formatRp(kembali).padStart(12)}
+Order: ${orderType}
+${noteLine}
+${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+Terima kasih!
+        </pre>
+    `);
+    w.print();
+}
+
+// ======================================================================
+// FUNGSI MANAJEMEN MENU
+// ======================================================================
+function addMenu(){
+    const name=$("mName").value.trim();
+    const category=$("mCategory").value;
+    const priceOffline=Number($("mPriceOffline").value);
+    const markupOnline=Number($("mOnlineMarkup").value);
+
+    if(!name || !category || !priceOffline) return alert("Isi Nama Menu, Kategori, dan Harga Offline.");
+    
+    const uniqueItemName = `${name} (${category})`;
+
+    if(store.menus.find(m => m.uniqueName === uniqueItemName)) return alert("Menu dengan nama dan kategori ini sudah ada. Hapus dulu untuk mengubah.");
+
+    const menuData = { 
+        name: name, 
+        category: category,
+        uniqueName: uniqueItemName,
+        priceOffline: priceOffline,
+        markupOnline: markupOnline,
+        isExtra: category === 'Extra' 
+    };
+
+    store.menus.push(menuData);
+    saveStore();
+    
+    $("mName").value=""; 
+    $("mCategory").value="";
+    $("mPriceOffline").value=""; 
+    $("mOnlineMarkup").value=""; 
+
+    renderMenus();
+    renderMenuEditor();
+}
+
+function renderMenuEditor(){
+    const root=$("menuEditor");
+    root.innerHTML="";
+    
+    store.menus.forEach((m,i)=>{
+        const priceOffline = formatRp(m.priceOffline);
+        const priceOnline = formatRp(m.priceOffline + m.markupOnline);
+        const markup = formatRp(m.markupOnline);
+
+        const priceDetail = `OFFLINE: ${priceOffline} | ONLINE: ${priceOnline} (+${markup})`;
+
+        const div=document.createElement("div");
+        div.className="menu-item";
+        div.innerHTML=`
+            <div>
+                <strong>${m.name} (${m.category})</strong><br>
+                <small>${priceDetail}</small>
+            </div>
+            <button class='btn danger' onclick='delMenu(${i})'>Hapus</button>
+        `;
+        root.appendChild(div);
+    });
+}
+function delMenu(i){store.menus.splice(i,1);saveStore();renderMenus();renderMenuEditor();}
+
+// NEW: FUNGSI HAPUS TRANSAKSI (MANAGER ONLY)
+function deleteTransaction(id) {
+    if (!currentUser || currentUser.role !== 'Manager') {
+        alert("Akses ditolak. Hanya Manajer yang dapat menghapus transaksi.");
+        return;
+    }
+
+    if (confirm(`Yakin ingin menghapus Transaksi ID: ${id}? Tindakan ini tidak dapat dibatalkan.`)) {
+        store.transactions = store.transactions.filter(t => t.id !== id);
+        saveStore();
+        alert("Transaksi berhasil dihapus.");
+        showReport('today'); 
+    }
+}
+
+
+// ======================================================================
+// FUNGSI LAPORAN & CLOSING
+// ======================================================================
+function showReport(filterType = 'today', dateInputTrigger = false){
+    const today = getDateOnly(new Date());
+    const transactions = store.transactions;
+    let filteredTrx = [];
+    let reportPeriod = filterType;
+
+    let startDate = null;
+    let endDate = null;
+    
+    if (dateInputTrigger) {
+        const dateValue = $("reportDate").value;
+        if (!dateValue) {
+            alert("Silakan pilih tanggal terlebih dahulu.");
+            return;
+        }
+        startDate = getDateOnly(dateValue);
+        endDate = startDate; 
+        reportPeriod = new Date(startDate).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+
+    } else if (filterType === 'today') {
+        startDate = today;
+        endDate = today;
+        reportPeriod = 'Hari Ini';
+    } else if (filterType === 'yesterday') {
+        startDate = today - (24 * 60 * 60 * 1000);
+        endDate = startDate;
+        reportPeriod = 'Kemarin';
+    } else if (filterType === 'month') {
+        const d = new Date();
+        startDate = new Date(d.getFullYear(), d.getMonth(), 1).getTime();
+        endDate = new Date(d.getFullYear(), d.getMonth() + 1, 0).getTime(); 
+        reportPeriod = 'Bulan Ini';
+    }
+
+    if (startDate !== null) {
+        filteredTrx = transactions.filter(t => {
+            const trxDateOnly = getDateOnly(t.date);
+            
+            if (filterType === 'today' || filterType === 'yesterday' || dateInputTrigger) {
+                return trxDateOnly === startDate;
+            }
+            if (filterType === 'month') {
+                return trxDateOnly >= startDate && trxDateOnly <= endDate;
+            }
+            return false;
+        });
+    }
+
+    renderSummary(filteredTrx, reportPeriod);
+    renderSalesByMenu(filteredTrx);
+    renderTransactionDetails(filteredTrx);
+}
+
+function renderSummary(filteredTrx, filter) {
+    const root = $("laporanSummary");
+    const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
+    const totalCount = filteredTrx.length;
+    
+    root.innerHTML = `
+        <p>Periode Laporan: **${filter}**</p> 
+        <p>Total Transaksi: **${totalCount}** Nota</p>
+        <p style="font-size: 1.2em; color: #d94949;">Total Penjualan (Sales Outlet): **${formatRp(totalSales)}**</p>
+    `;
+}
+
+function renderSalesByMenu(filteredTrx) {
+    const root = $("salesByMenu");
+    let menuMix = {};
+
+    filteredTrx.forEach(t => {
+        t.items.forEach(item => {
+            if (!menuMix[item.name]) { 
+                menuMix[item.name] = { qty: 0, total: 0 };
+            }
+            menuMix[item.name].qty += item.qty;
+            menuMix[item.name].total += item.price * item.qty;
+        });
+    });
+
+    if (Object.keys(menuMix).length === 0) {
+        root.innerHTML = "<p>Tidak ada penjualan menu di periode ini.</p>";
+        return;
+    }
+
+    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
+
+    let html = `<table class="report-table">
+        <thead>
+            <tr><th>Nama Menu (Ukuran/Topping)</th><th>QTY Terjual</th><th>Total Penjualan</th></tr>
+        </thead>
+        <tbody>`;
+
+    sortedMenu.forEach(([name, data]) => {
+        html += `
+            <tr>
+                <td>${name}</td>
+                <td>${data.qty}</td>
+                <td>${formatRp(data.total)}</td>
+            </tr>
+        `;
+    });
+
+    html += `</tbody></table>`;
+    root.innerHTML = html;
+}
+
+function renderTransactionDetails(filteredTrx) {
+    const root=$("laporanList");
+    root.innerHTML="";
+
+    if(filteredTrx.length===0){
+        root.innerHTML="<p>Tidak ada detail transaksi di periode ini.</p>";
+        return;
+    }
+    
+    const isManager = currentUser && currentUser.role === 'Manager'; 
+
+    filteredTrx.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t=>{
+        const d=document.createElement("div");
+        d.className="order-item";
+        d.style.borderBottom = "1px solid #eee";
+        d.style.marginBottom = "10px";
+        
+        const noteDisplay = t.note ? t.note : 'Tunai';
+
+        const deleteBtn = isManager ? 
+            `<button class='btn danger' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px; background: #c62828;' onclick='deleteTransaction(${t.id})'>Hapus Transaksi</button>` : '';
+
+        d.innerHTML=`
+            <div>**Nota ID: ${t.id}**</div>
+            <div>Waktu: ${new Date(t.date).toLocaleString("id-ID")}<br>Pelanggan/Driver: ${noteDisplay}<br>${t.orderType} oleh Kasir: ${t.user}</div>
+            <p style="margin: 5px 0;">Item: ${t.items.map(i => `${i.name} x${i.qty}`).join(', ')}</p>
+            <div style="font-weight: bold;">Total: ${formatRp(t.total)}</div>
+            ${deleteBtn}
+        `;
+        root.appendChild(d);
+    });
+}
+
+// FUNGSI PRINT CLOSING (FIXED 80MM)
+function printClosing(){
+    const trx = store.transactions;
+    if(trx.length === 0) return;
+    
+    let totalAll = 0;
+    let menuMix = {};
+    const MAX_WIDTH = 48; // Karakter maksimal untuk kertas 80mm
+
+    trx.forEach(t => {
+        totalAll += t.total;
+        t.items.forEach(item => {
+            if (!menuMix[item.name]) {
+                menuMix[item.name] = { qty: 0, total: 0 };
+            }
+            menuMix[item.name].qty += item.qty;
+            menuMix[item.name].total += item.price * item.qty;
+        });
+    });
+
+    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
+    
+    const createReportLine = (name, qty, total) => {
+        const totalRpStr = formatRp(total).padStart(12); 
+        const namePart = `${name.substring(0, 30)} x${qty}`; 
+        const space = MAX_WIDTH - namePart.length - totalRpStr.length;
+        return `${namePart}${Array(space > 0 ? space : 1).join(' ')}${totalRpStr}`;
+    };
+
+    const padLine = (label, value) => {
+        const valueStr = String(value);
+        const labelLen = label.length;
+        const space = MAX_WIDTH - labelLen - valueStr.length;
+        return `${label}${Array(space > 0 ? space : 1).join(' ')}${valueStr}`;
+    };
+
+
+    let menuDetail = "";
+    sortedMenu.forEach(([name, data]) => {
+        menuDetail += createReportLine(name, data.qty, data.total) + '\n';
+    });
+
+    const w=window.open("","_blank");
+    
+    const kasirLine = padLine("Kasir: ", currentUser ? currentUser.email : "-");
+    const dateLine = padLine("Tanggal Cetak: ", new Date().toLocaleString("id-ID"));
+    const totalTrxLine = padLine("Total Transaksi: ", `${trx.length} Nota`);
+    const totalSalesLine = padLine("Total Penjualan: ", formatRp(totalAll));
+
+    w.document.write(`
+        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 80mm; max-width: 80mm;'>
+        
+        === CLOSING REPORT ===
+        
+        Outlet: JIF PIZZA CONDET
+${kasirLine}
+${dateLine}
+        
+        ${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+        
+        RINGKASAN PENJUALAN
+${totalTrxLine}
+${totalSalesLine}
+        
+        ${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+        
+        SALES BY MENU (PRODUCT MIX)
+${menuDetail.trim()}
+        ${'------------------------------------------------'.substring(0, MAX_WIDTH)}
+        
+        ${'================================================'.substring(0, MAX_WIDTH)}
+        TERIMA KASIH, LAPORAN SELESAI
+        </pre>
+    `);
+    w.print();
+}
+
+window.onload=()=>{
+  if (currentUser) {
+    if(currentUser.role === 'Manager'){
+      $("userRoleDisplay").innerText = `Manajer: ${currentUser.email}`;
+    } else {
+      $("userRoleDisplay").innerText = `Kasir: ${currentUser.email}`;
+    }
+    activateTab('home');
+  } else {
+    showLogin();
+  }
+};
+</script>
+</body>
+</html>
