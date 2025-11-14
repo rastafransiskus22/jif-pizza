@@ -92,12 +92,13 @@ header p{margin:4px 0 0 0;font-size:14px}
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* GAYA TAB AKTIF (Merah) */
+/* GAYA TAB AKTIF (Merah) - FIX: Hapus text-shadow */
 .navbar button.active-tab {
     background: linear-gradient(145deg, #d32f2f, #e57373);
     color: #fff;
     box-shadow: 0 0 5px rgba(217, 73, 73, 0.7); 
     transform: none; 
+    text-shadow: none !important; /* FIX: Menghapus bayangan teks */
 }
 
 
@@ -307,12 +308,14 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
     <button class="btn primary" onclick="processManualPayment()">Bayar Tunai & Cetak Struk</button>
     
     <h4 style="margin: 10px 0;">Atau Pilih Metode Lain:</h4>
-    <button class="btn secondary" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
-    <button class="btn secondary" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
-    <button class="btn secondary" onclick="completePayment('Gojek')">Gojek/Gopay</button>
-    <button class="btn secondary" onclick="completePayment('Grab')">Grab/OVO</button>
-    <button class="btn secondary" onclick="completePayment('Shopee')">ShopeePay</button>
-  </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+        <button class="btn secondary" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
+        <button class="btn secondary" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
+        <button class="btn secondary" onclick="completePayment('Gojek')">Gojek/Gopay</button>
+        <button class="btn secondary" onclick="completePayment('Grab')">Grab/OVO</button>
+        <button class="btn secondary" onclick="completePayment('Shopee')">ShopeePay</button>
+    </div>
+    </div>
 </div>
 
 <div class="overlay" id="qrisModal">
@@ -730,7 +733,7 @@ ${cart.map(i => createStrukLine(i.name, i.qty, i.price)).join('\n')}
 ${'__________________________________________'.substring(0, MAX_WIDTH)}
 Subtotal:     ${formatRp(subtotal).padStart(12)}
 ${discountText ? discountText + '\n' : ''}${`Total Akhir:  ${formatRp(finalTotal).padStart(12)}`}
-${(paymentMethod === 'Cash' || paidAmount > finalTotal) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
+${(paymentMethod === 'Cash' || bayar > finalTotal) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
 Metode Bayar: ${paymentMethod}
 Order: ${orderType}
 ${noteLine}
@@ -907,7 +910,7 @@ function deleteTransaction(id) {
         showReport('today'); 
     }
 }
-  // ======================================================================
+// ======================================================================
 // FUNGSI LAPORAN, GRAFIK, DAN CETAK
 // ======================================================================
 
