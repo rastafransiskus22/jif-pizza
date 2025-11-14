@@ -596,7 +596,7 @@ function printStruk(subtotal, discountAmount, finalTotal, bayar, kembali, note){
         const totalStr = formatRp(price * qty).padStart(12);
         const namePart = `${name} x${qty}`;
         const space = MAX_WIDTH - namePart.length - totalStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join(' ')}${totalStr}`;
+        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
     };
     
     const noteLine = `Pelanggan: ${note.substring(0, MAX_WIDTH - 11)}`; 
@@ -1014,7 +1014,7 @@ function printClosing(){
         const totalRpStr = formatRp(data.total).padStart(12); 
         const namePart = `${name.substring(0, 30)} x${data.qty}`; 
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join(' ')}${totalRpStr}`;
+        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
     };
 
     const menuDetail = Object.keys(menuMix).map(name => createReportLine(name, menuMix[name])).join('\n');
@@ -1093,7 +1093,7 @@ function printReport() {
         const valStr = String(value);
         const labelLen = label.length;
         const space = MAX_WIDTH - labelLen - valStr.length;
-        return `${label}${Array(space > 0 ? space : 1).join(' ')}${valStr}`;
+        return `${label}${Array(space > 0 ? space : 1).join('.')}${valueStr}`;
     };
 
     const w = window.open("", "_blank");
