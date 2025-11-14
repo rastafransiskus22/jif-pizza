@@ -92,13 +92,12 @@ header p{margin:4px 0 0 0;font-size:14px}
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* GAYA TAB AKTIF (Merah) - FIX: Hapus text-shadow */
+/* GAYA TAB AKTIF (Merah) */
 .navbar button.active-tab {
     background: linear-gradient(145deg, #d32f2f, #e57373);
     color: #fff;
     box-shadow: 0 0 5px rgba(217, 73, 73, 0.7); 
     transform: none; 
-    text-shadow: none !important; /* FIX: Menghapus bayangan teks */
 }
 
 
@@ -139,7 +138,23 @@ header p{margin:4px 0 0 0;font-size:14px}
 }
 .order-box{margin-top:12px;padding:10px;border-top:2px solid #ccc}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
-.modal{background:white;padding:20px;border-radius:10px;text-align:center;max-width:320px;width:90%}
+.modal{
+  background:white;
+  padding:20px;
+  border-radius:10px;
+  text-align:center;
+  max-width:320px;
+  width:90%;
+  display: flex; /* Tambah: Untuk mengatur tombol di modal */
+  flex-direction: column; /* Tambah: Agar tombol berderet ke bawah */
+  gap: 10px; /* Tambah: Jarak antar elemen di modal */
+} 
+/* Tambahan untuk tata letak tombol payment di modal */
+.modal .payment-method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* 2 kolom */
+    gap: 8px; /* Jarak antar tombol payment */
+}
 input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;margin:4px 0}
 .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
 .report-table th, .report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -308,14 +323,14 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
     <button class="btn primary" onclick="processManualPayment()">Bayar Tunai & Cetak Struk</button>
     
     <h4 style="margin: 10px 0;">Atau Pilih Metode Lain:</h4>
-    <div style="display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
-        <button class="btn secondary" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
-        <button class="btn secondary" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
-        <button class="btn secondary" onclick="completePayment('Gojek')">Gojek/Gopay</button>
-        <button class="btn secondary" onclick="completePayment('Grab')">Grab/OVO</button>
-        <button class="btn secondary" onclick="completePayment('Shopee')">ShopeePay</button>
+    <div class="payment-method-grid"> 
+        <button class="btn secondary" id="pay-cash-pas" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
+        <button class="btn secondary" id="pay-qris" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
+        <button class="btn secondary" id="pay-gojek" onclick="completePayment('Gojek')">Gojek/Gopay</button>
+        <button class="btn secondary" id="pay-grab" onclick="completePayment('Grab')">Grab/OVO</button>
+        <button class="btn secondary" id="pay-shopee" onclick="completePayment('Shopee')">ShopeePay</button>
     </div>
-    </div>
+  </div>
 </div>
 
 <div class="overlay" id="qrisModal">
@@ -377,7 +392,6 @@ function calculatePrice(menu) {
     }
     return menu.priceOffline;
 }
-
 // ======================================================================
 // FUNGSI LOGIN / LOGOUT
 // ======================================================================
@@ -616,6 +630,18 @@ function openPaymentModal() {
     $("manualBayar").value = '';
     
     $("modalTotal").innerText = `Total Akhir: ${formatRp(currentFinalTotal)}`;
+    
+    // Logika menyembunyikan tombol berdasarkan orderType
+    const isOnline = orderType === 'Online';
+    
+    // Sembunyikan/Tampilkan metode payment
+    $("pay-cash-pas").style.display = isOnline ? 'none' : 'block'; 
+    $("pay-qris").style.display = isOnline ? 'none' : 'block'; 
+    
+    $("pay-gojek").style.display = isOnline ? 'block' : 'none'; 
+    $("pay-grab").style.display = isOnline ? 'block' : 'none'; 
+    $("pay-shopee").style.display = isOnline ? 'block' : 'none'; 
+    
     $("paymentModal").style.display = "flex";
 }
 
@@ -705,7 +731,6 @@ function saveTransaction(subtotal, discountAmount, finalTotal, customerNote, pay
     });
     saveStore();
 }
-
 function printStruk(subtotal, discountAmount, finalTotal, bayar, kembali, note, paymentMethod){
     const now = new Date().toLocaleString("id-ID");
     const MAX_WIDTH = 42; 
@@ -733,7 +758,7 @@ ${cart.map(i => createStrukLine(i.name, i.qty, i.price)).join('\n')}
 ${'__________________________________________'.substring(0, MAX_WIDTH)}
 Subtotal:     ${formatRp(subtotal).padStart(12)}
 ${discountText ? discountText + '\n' : ''}${`Total Akhir:  ${formatRp(finalTotal).padStart(12)}`}
-${(paymentMethod === 'Cash' || bayar > finalTotal) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
+${(paymentMethod === 'Cash' || paidAmount > finalTotal) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
 Metode Bayar: ${paymentMethod}
 Order: ${orderType}
 ${noteLine}
@@ -910,7 +935,7 @@ function deleteTransaction(id) {
         showReport('today'); 
     }
 }
-// ======================================================================
+  // ======================================================================
 // FUNGSI LAPORAN, GRAFIK, DAN CETAK
 // ======================================================================
 
@@ -926,8 +951,19 @@ function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
         if (!dateValue) {
             return [];
         }
-        startDate = getDateOnly(dateValue);
-        endDate = startDate; 
+        
+        const selectedDate = new Date(dateValue);
+        
+        if (filterType === 'month' || (selectedDate.getDate() === 1 && new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate() === selectedDate.getDate())) {
+            // Jika tanggal yang dipilih adalah tanggal 1 (asumsi awal bulan) atau filter bulan
+            startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).getTime();
+            endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getTime();
+        } else {
+            // Filter harian (default ketika tanggal spesifik dipilih)
+            startDate = getDateOnly(selectedDate);
+            endDate = startDate; 
+        }
+
     } else if (filterType === 'today') {
         startDate = today;
         endDate = today;
@@ -942,14 +978,7 @@ function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
     if (startDate !== null) {
         return transactions.filter(t => {
             const trxDateOnly = getDateOnly(t.date);
-            
-            if (filterType === 'today' || filterType === 'yesterday' || dateInputTrigger) {
-                return trxDateOnly === startDate;
-            }
-            if (filterType === 'month') {
-                return trxDateOnly >= startDate && trxDateOnly <= endDate;
-            }
-            return false;
+            return trxDateOnly >= startDate && trxDateOnly <= endDate;
         });
     }
     return transactions; 
@@ -967,8 +996,14 @@ function showReport(filterType = 'today', dateInputTrigger = false){
             alert("Silakan pilih tanggal terlebih dahulu.");
             return;
         }
-        reportPeriod = new Date(selectedDate).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-        activeFilter = null; 
+        const selDateObj = new Date(selectedDate);
+        if (selDateObj.getDate() === 1) { // Jika tanggal 1, anggap ingin laporan bulanan
+            reportPeriod = `Bulan ${selDateObj.toLocaleDateString('id-ID', {month:'long', year:'numeric'})}`;
+            activeFilter = 'month'; // Set filter type ke month untuk logika grafik
+        } else {
+            reportPeriod = selDateObj.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+            activeFilter = 'daily';
+        }
     } else if (filterType === 'today') {
         reportPeriod = 'Hari Ini';
     } else if (filterType === 'yesterday') {
@@ -986,7 +1021,6 @@ function showReport(filterType = 'today', dateInputTrigger = false){
     renderTransactionDetails(filteredTrx);
     renderSalesGraph(filteredTrx, activeFilter, selectedDate); 
 }
-
 // FUNGSI GRAFIK (Chart.js)
 function renderSalesGraph(transactions, filterType, selectedDate) {
     const canvas = $("salesChart");
@@ -997,12 +1031,13 @@ function renderSalesGraph(transactions, filterType, selectedDate) {
     let labels = [];
     let salesData = [];
     let title = "Grafik Penjualan";
+    const now = new Date();
 
-    if (filterType === 'today' || (selectedDate && getDateOnly(selectedDate) === getDateOnly(new Date()))) {
+    if (filterType === 'today' || filterType === 'yesterday' || filterType === 'daily') {
         // Harian (Per Jam)
         title = "Grafik Penjualan Harian (Per Jam)";
         for (let i = 0; i < 24; i++) {
-            labels.push(`${i}:00 - ${i+1}:00`);
+            labels.push(`${i}:00`);
             salesData.push(0);
         }
         transactions.forEach(t => {
@@ -1018,28 +1053,45 @@ function renderSalesGraph(transactions, filterType, selectedDate) {
         let start, end;
 
         if (filterType === 'month') {
-            start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-            end = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
+            start = new Date(now.getFullYear(), now.getMonth(), 1);
+            end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
         } else if (selectedDate) {
-            if (getDateOnly(new Date(selectedDate)) === getDateOnly(new Date(selectedDate))) {
-                return renderSalesGraph(transactions, 'today', selectedDate); 
+            // Logika untuk Laporan Bulanan dari Tanggal Spesifik
+            const selectedDateObj = new Date(selectedDate);
+            const selectedMonth = selectedDateObj.getMonth();
+            const selectedYear = selectedDateObj.getFullYear();
+            
+            // Jika filter harian terpilih, kembali ke grafik harian
+            if (filterType === 'daily' && getDateOnly(selectedDateObj) === getDateOnly(selectedDateObj)) {
+                 // Cek jika tanggal yang dipilih adalah Hari Ini, tampilkan laporan Harian
+                if (getDateOnly(selectedDateObj) === getDateOnly(now)) {
+                    // return renderSalesGraph(transactions, 'today', selectedDate); // Sudah dihandle di atas
+                } else {
+                    // Jika bukan Hari Ini, tetap Harian (Per Jam)
+                     return renderSalesGraph(transactions, 'daily', selectedDate);
+                }
             }
+            
+            start = new Date(selectedYear, selectedMonth, 1);
+            end = new Date(selectedYear, selectedMonth + 1, 0);
         }
         
-        for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-            const dateStr = new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-            labels.push(dateStr);
-            dateMap[getDateOnly(d)] = labels.length - 1; 
-            salesData.push(0);
-        }
-        
-        transactions.forEach(t => {
-            const dayKey = getDateOnly(t.date);
-            const index = dateMap[dayKey];
-            if (index !== undefined) {
-                salesData[index] += t.total;
+        if (start && end) {
+            for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
+                const dateStr = new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
+                labels.push(dateStr);
+                dateMap[getDateOnly(d)] = labels.length - 1; 
+                salesData.push(0);
             }
-        });
+            
+            transactions.forEach(t => {
+                const dayKey = getDateOnly(t.date);
+                const index = dateMap[dayKey];
+                if (index !== undefined) {
+                    salesData[index] += t.total;
+                }
+            });
+        }
     }
 
     const ctx = canvas.getContext('2d');
@@ -1256,7 +1308,6 @@ function printClosing(){
  Outlet: JIF PIZZA CONDET
 ${kasirLine}
 ${dateLine}
-        
 ${'__________________________________________'.substring(0, MAX_WIDTH)} 
 RINGKASAN PENJUALAN
 ${totalTrxLine}
@@ -1282,9 +1333,16 @@ TERIMA KASIH, LAPORAN SELESAI
 function printReport() {
     const dateInputTrigger = $("reportDate").value ? true : false;
     let activeFilter = 'today'; 
+    
     if (dateInputTrigger) {
-        activeFilter = null; 
-    } 
+        const selectedDate = $("reportDate").value;
+        const selDateObj = new Date(selectedDate);
+        if (selDateObj.getDate() === 1) { // Jika tanggal 1, anggap ingin laporan bulanan
+            activeFilter = 'month'; 
+        } else {
+            activeFilter = 'daily';
+        }
+    }
 
     const filteredTrx = getFilteredTransactions(activeFilter, dateInputTrigger);
     
@@ -1294,7 +1352,13 @@ function printReport() {
     
     let reportPeriod;
     if (dateInputTrigger) {
-         reportPeriod = new Date($("reportDate").value).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+        const selectedDate = $("reportDate").value;
+        const selDateObj = new Date(selectedDate);
+        if (selDateObj.getDate() === 1) { 
+            reportPeriod = `Bulan ${selDateObj.toLocaleDateString('id-ID', {month:'long', year:'numeric'})}`;
+        } else {
+            reportPeriod = selDateObj.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
+        }
     } else if (activeFilter === 'today') {
         reportPeriod = 'Hari Ini';
     } else if (activeFilter === 'yesterday') {
