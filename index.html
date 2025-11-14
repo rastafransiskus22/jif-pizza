@@ -21,7 +21,7 @@ body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#fff;color:#222}
 .hidden{display:none}
 header.hidden, .navbar.hidden { display: none !important; }
 
-/* LATAR BELAKANG GAMBAR HEADER (pizza.jpg) */
+/* LATAR BELARANG GAMBAR HEADER (pizza.jpg) */
 header{
   background:url('pizza.jpg') center/cover no-repeat; 
   color:#fff;
@@ -92,12 +92,13 @@ header p{margin:4px 0 0 0;font-size:14px}
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 
-/* GAYA TAB AKTIF (Merah) */
+/* GAYA TAB AKTIF (Merah) - FIX: Hapus text-shadow */
 .navbar button.active-tab {
     background: linear-gradient(145deg, #d32f2f, #e57373);
     color: #fff;
     box-shadow: 0 0 5px rgba(217, 73, 73, 0.7); 
     transform: none; 
+    text-shadow: none !important; 
 }
 
 
@@ -139,6 +140,17 @@ header p{margin:4px 0 0 0;font-size:14px}
 .order-box{margin-top:12px;padding:10px;border-top:2px solid #ccc}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
 .modal{background:white;padding:20px;border-radius:10px;text-align:center;max-width:320px;width:90%}
+/* FIX 1: Jarak tombol di modal payment */
+#paymentModal .modal button:not(.btn.primary) { 
+    margin: 5px; /* Jarak antar tombol */
+} 
+/* NEW: Flexbox untuk tombol payment */
+#paymentMethods { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 10px; 
+    justify-content: center; 
+}
 input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;margin:4px 0}
 .report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
 .report-table th, .report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
@@ -171,133 +183,95 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 </style>
 </head>
 <body>
-<header id="appHeader" class="hidden"> 
-  <h1>🍕 JIF PIZZA CONDET</h1>
-  <p id="userRoleDisplay">Mode Offline</p>
-</header>
-<div id="appNavbar" class="navbar hidden"> 
-  <button id="nav-home" class="secondary-nav" onclick="activateTab('home')">Home</button>
-  <button id="nav-kasir" class="secondary-nav" onclick="activateTab('kasir')">Kasir</button>
-  <button id="nav-menu" class="secondary-nav" onclick="activateTab('menu')">Menu</button> 
-  <button id="nav-laporan" class="secondary-nav" onclick="activateTab('laporan');showReport('today')">Laporan</button>
-  <button id="nav-logout" class="secondary-nav" onclick="logout()">Logout</button>
-</div>
-
 <div id="loginPage" class="container">
-  <h2>Login</h2>
-  <input type="email" id="email" placeholder="Email"/>
-  <input type="password" id="password" placeholder="Password"/>
-  <button class="btn primary" onclick="login()">Login</button>
-  <button class="btn secondary" onclick="register()">Daftar (User)</button>
-  <p style="font-size: 0.8em; margin-top: 15px; color: #666;">
-    *Simulasi Role: Akun baru otomatis menjadi Kasir (User).
-    (Akun Manajer sudah terdaftar)
-  </p>
+    <h2>Login JIF PIZZA POS</h2>
+    <input type="email" id="loginEmail" placeholder="Email Kasir/Manager" required/>
+    <input type="password" id="loginPassword" placeholder="Password" required/>
+    <button class="btn primary" onclick="login()">Login</button>
 </div>
 
-<div id="homePage" class="container hidden">
-  <img src="pizza.jpg" alt="JIF Pizza" /> <h2 style="color: #d94949;">Selamat Datang di Jif Pizza!</h2>
-  <p style="line-height: 1.6;">
-    Ini adalah tempat di mana semangat bertemu dengan peluang. Kami percaya pada potensi setiap individu. Gunakan hari-hari Anda di sini untuk belajar, bertumbuh, dan mengukir prestasi. Jadilah bagian dari resep rahasia kesuksesan kami.
-    <br><br>
-    Mari mulai memanggang masa depan yang cerah!
-  </p>
-  <button class="btn primary" onclick="activateTab('kasir')">Mulai Kasir</button>
+<header id="appHeader" class="hidden">
+    <h1>JIF PIZZA CONDET</h1>
+    <p>Manajer: <span id="userEmailDisplay"></span> | Role: <span id="userRoleDisplay"></span></p>
+</header>
+
+<div class="navbar" id="appNavbar">
+    <button class="primary-nav active-tab" onclick="changePage('home')">Home</button>
+    <button class="primary-nav" onclick="changePage('kasir')">Kasir</button>
+    <button class="primary-nav" onclick="changePage('menu')">Menu</button>
+    <button class="primary-nav" onclick="changePage('laporan')">Laporan</button>
+    <button class="danger-nav" onclick="logout()">Logout</button>
 </div>
 
-<div id="kasirPage" class="container hidden">
-  <input type="text" id="customerNote" placeholder="Nama Pelanggan/Driver/Catatan" style="margin-bottom: 10px;"/>
-  <div id="orderLabel"></div>
-  <div class="navbar" style="margin-top: 10px; box-shadow: none; border: 1px solid #eee;">
-    <button class="secondary-nav" onclick="renderMenus('Semua')">Semua</button>
-    <button class="secondary-nav" onclick="renderMenus('Large')">Large</button>
-    <button class="secondary-nav" onclick="renderMenus('Reguler')">Reguler</button>
-    <button class="secondary-nav" onclick="renderMenus('Separuh')">Separuh</button> 
-    <button class="secondary-nav" onclick="renderMenus('Extra')">Extra</button>
-  </div>
-  <div id="menuList" class="menu-grid" style="margin-top: 10px;"></div>
-  
-  <div class="order-box">
-    <h3>Pesanan</h3>
-    <div id="orderList"></div>
-    <div style="border-top: 1px solid #ccc; padding: 5px 0; margin-top: 10px;">
-        <select id="discountSelector" onchange="applyDiscount()" style="width: calc(100% - 20px); margin-bottom: 5px;">
-            <option value="">-- Pilih Diskon (Tidak Ada) --</option>
-        </select>
-        <div id="discountDisplay" style="font-weight: bold; color: #c62828;">Diskon: Rp 0</div>
+<div class="container" id="appContainer">
+    
+    <div id="homePage" class="page">
+        <img src="https://i.ibb.co/L9s39pS/1000207993.jpg" alt="JIF Pizza Welcome"> 
+        <h2>Selamat Datang di Jif Pizza!</h2>
+        <p>Ini adalah tempat di mana semangat bertemu dengan peluang. Kami percaya pada potensi setiap individu. Gunakan hari-hari Anda di sini untuk belajar, bertumbuh, dan mengukir prestasi. Jadilah bagian dari resep rahasia kesuksesan kami.</p>
+        <p>Mari mulai memanggang masa depan yang cerah!</p>
     </div>
-    <h3 id="totalDisplay" style="color: #2e7d32; margin-top: 10px;">TOTAL BAYAR: Rp 0</h3> 
-    <button class="btn primary" onclick="openPaymentModal()">Bayar & Cetak</button>
-  </div>
-</div>
-<div id="menuPage" class="container hidden">
-  <h3>Tambah Menu (Manajer Only)</h3>
-  <input id="mName" placeholder="Nama menu (misal: Mix Lovers)"/>
-  
-  <select id="mCategory">
-    <option value="">-- Pilih Ukuran/Kategori --</option>
-    <option value="Large">Large Pizza</option>
-    <option value="Reguler">Reguler Pizza</option>
-    <option value="Separuh">Separuh Pizza</option> 
-    <option value="Extra">Extra Topping</option>
-  </select>
-  
-  <input id="mPriceOffline" type="number" placeholder="Harga Jual OFFLINE (Rp)"/>
-  <input id="mOnlineMarkup" type="number" placeholder="Markup Harga ONLINE (Rp)"/>
-  
-  <button class="btn primary" onclick="addMenu()">Tambah</button>
-  <div id="menuEditor"></div>
 
-  <h3 style="margin-top: 30px;">Kelola Diskon (Manajer Only)</h3>
-  <input id="dName" placeholder="Nama Diskon (misal: Diskon Merdeka)"/>
-  
-  <select id="dType">
-    <option value="">-- Tipe Diskon --</option>
-    <option value="percentage">Persen (%)</option>
-    <option value="amount">Nominal (Rp)</option>
-  </select>
-  
-  <input id="dValue" type="number" placeholder="Nilai Diskon (misal: 10 atau 5000)"/>
-  
-  <button class="btn secondary" onclick="addDiscount()">Tambah Diskon</button>
-  <div id="discountEditor" class="menu-editor" style="margin-top: 15px;"></div>
-</div>
+    <div id="kasirPage" class="page hidden">
+        <input type="text" id="customerNote" placeholder="Nama Pelanggan/Driver/Catatan"/>
+        <select id="orderType" style="margin-bottom: 10px;">
+            <option value="Offline">Tipe Order: Offline</option>
+            <option value="Online">Tipe Order: Online</option>
+        </select>
+        
+        <div id="menuSelectorButtons" style="display: flex; gap: 5px; margin-bottom: 10px; overflow-x: auto;">
+            </div>
 
-<div id="laporanPage" class="container hidden">
-  <h3>Laporan Penjualan</h3>
-  
-  <div style="margin-bottom: 15px; border-bottom: 1px solid #eee; padding-bottom: 15px;">
-    <label for="reportDate" style="font-weight: bold;">Pilih Tanggal Spesifik:</label>
-    <input type="date" id="reportDate" style="width: 100%; display: block; margin-bottom: 10px;"/>
-    <button class="btn primary" onclick="showReport(null, true)">Tampilkan Laporan</button>
-    <button class="btn secondary" style="margin-top: 10px;" onclick="printReport()">Cetak Laporan</button> 
-  </div>
-  <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-    <button class="btn secondary" onclick="showReport('today')">Hari Ini</button>
-    <button class="btn secondary" onclick="showReport('yesterday')">Kemarin</button>
-    <button class="btn secondary" onclick="showReport('month')">Bulan Ini</button>
-  </div>
-  
-  <h4 style="margin-top: 20px;">Grafik Penjualan</h4>
-  <div style="width: 100%; max-width: 600px; margin: 0 auto;">
-    <canvas id="salesChart"></canvas> 
-  </div>
-  
-  <p style="font-weight: bold; margin-top: 20px;">Ringkasan:</p>
-  <div id="laporanSummary"></div> 
-  
-  <h4 style="margin-top: 20px;">Sales by Menu (Product Mix)</h4>
-  <div id="salesByMenu"></div>
+        <div id="orderItems" class="order-box">
+            <p>Keranjang kosong.</p>
+        </div>
 
-  <h4 style="margin-top: 20px;">Detail Transaksi</h4>
-  <div id="laporanList"></div>
-</div>
-<div class="overlay" id="orderTypeOverlay">
-  <div class="modal">
-    <h3>Pilih Tipe Order</h3>
-    <button class="btn primary" onclick="setOrderType('Online')">Order Online</button>
-    <button class="btn secondary" onclick="setOrderType('Offline')">Order Offline</button>
-  </div>
+        <div id="discountSection" style="margin-top: 15px;">
+            <label for="discountSelect">-- Pilih Diskon (Tidak Ada) --</label>
+            <select id="discountSelect" onchange="applyDiscount()">
+                <option value="">Tidak Ada</option>
+            </select>
+            <p style="margin: 10px 0;">Diskon: <span id="discountDisplay">Rp 0</span></p>
+        </div>
+
+        <div style="margin: 15px 0; border-top: 1px solid #ccc; padding-top: 10px;">
+            <h3 style="color: green;">TOTAL BAYAR: <span id="totalDisplay">Rp 0</span></h3>
+            <button class="btn primary" onclick="openPaymentModal()">Bayar & Cetak</button>
+        </div>
+    </div>
+
+    <div id="menuPage" class="page hidden">
+        <h2>Daftar Menu Tersedia</h2>
+        <div id="menuList" class="menu-grid">
+            </div>
+    </div>
+
+    <div id="laporanPage" class="page hidden">
+        <h2>Laporan Penjualan</h2>
+        <div style="display: flex; gap: 5px; margin-bottom: 10px;">
+            <button class="btn secondary" onclick="filterTransactions('today', this)">Hari Ini</button>
+            <button class="btn secondary" onclick="filterTransactions('yesterday', this)">Kemarin</button>
+            <button class="btn secondary" onclick="filterTransactions('month', this)">Bulan Ini</button>
+        </div>
+        <input type="date" id="reportDate" onchange="filterTransactions('date', this)" style="max-width: 150px; display: inline-block;">
+        <button class="btn secondary" onclick="printReport()">Cetak Laporan</button>
+        
+        <hr style="margin: 15px 0;">
+
+        <h3>Ringkasan:</h3>
+        <div id="laporanSummary" style="padding: 10px; border: 1px solid #ddd; border-radius: 5px; margin-bottom: 15px;">
+            <p>Pilih filter untuk melihat ringkasan.</p>
+        </div>
+
+        <h3>Sales by Menu (Product Mix):</h3>
+        <div id="laporanMenuMix">
+            <p>Data menu terlaris akan muncul di sini.</p>
+        </div>
+
+        <h3 style="margin-top: 20px;">DETAIL Transaksi:</h3>
+        <div id="laporanList">
+            </div>
+    </div>
 </div>
 
 <div class="overlay" id="paymentModal">
@@ -307,306 +281,282 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
     <button class="btn primary" onclick="processManualPayment()">Bayar Tunai & Cetak Struk</button>
     
     <h4 style="margin: 10px 0;">Atau Pilih Metode Lain:</h4>
-    <button class="btn secondary" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
-    <button class="btn secondary" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
-    <button class="btn secondary" onclick="completePayment('Gojek')">Gojek/Gopay</button>
-    <button class="btn secondary" onclick="completePayment('Grab')">Grab/OVO</button>
-    <button class="btn secondary" onclick="completePayment('Shopee')">ShopeePay</button>
+    <div id="paymentMethods"> 
+      <button class="btn secondary" id="btnBayarPas" onclick="completePayment('Cash', currentFinalTotal)">Bayar Pas (Tunai)</button>
+      <button class="btn secondary" onclick="openQrisModal()">QRIS (Scan Barcode)</button>
+      <button class="btn secondary" onclick="completePayment('Gojek')">Gojek/Gopay</button>
+      <button class="btn secondary" onclick="completePayment('Grab')">Grab/OVO</button>
+      <button class="btn secondary" onclick="completePayment('Shopee')">ShopeePay</button>
+    </div>
   </div>
 </div>
 
 <div class="overlay" id="qrisModal">
   <div class="modal">
-    <h3>Scan QRIS Anda</h3>
-    <img src="IMG-20251115-WA0000.jpg" alt="QRIS Payment" style="max-width: 80%; height: auto; margin: 10px auto; display: block;">
-    <p>Pastikan pembayaran telah sukses!</p>
-    <button class="btn primary" onclick="confirmQrisPayment()">Konfirmasi Pembayaran QRIS</button>
+    <h3>Scan QRIS Ini</h3>
+    <img id="qrisImage" src="qris_placeholder.png" alt="QRIS Code" style="width: 150px; height: 150px; margin: 10px 0;"/>
+    <p>Total Bayar: <span id="qrisAmount">Rp 0</span></p>
+    <button class="btn primary" onclick="completePayment('QRIS')">Pembayaran Selesai</button>
     <button class="btn danger" onclick="$('qrisModal').style.display='none'">Batal</button>
   </div>
 </div>
+
 <script>
-// ======================================================================
-// FUNGSI PWA (SERVICE WORKER & A2HS)
-// ======================================================================
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
-      .then(registration => {
-        console.log('Service Worker berhasil didaftarkan. Scope:', registration.scope);
-      })
-      .catch(err => {
-        console.log('Gagal mendaftarkan Service Worker:', err);
-      });
-  });
-}
-  // ======================================================================
-// FUNGSI INTI & UTILITY
-// ======================================================================
+// <![CDATA[
+// Global Variables
+let currentUser = JSON.parse(localStorage.getItem('currentUser'));
+let cart = JSON.parse(localStorage.getItem('cart')) || [];
+let orderType = 'Offline'; 
+let currentFinalTotal = 0; 
 
-const STORE_KEY="jif_pos_v10_0"; 
-let store=JSON.parse(localStorage.getItem(STORE_KEY)||'{"users":[{"email":"manager@jif.com","password":"123","role":"Manager"}],"menus":[],"transactions":[],"discounts":[]}'); 
-let currentUser=JSON.parse(localStorage.getItem('currentUser')) || null; 
+// Database/Store Mock-up
+let store = {
+    users: [
+        { email: "manager@jif.com", password: "manager", role: "Manager", name: "Joko" },
+        { email: "kasir@jif.com", password: "kasir", role: "Kasir", name: "Dina" }
+    ],
+    menu: [
+        { id: 1, name: "MIX LOVER", price: 65000, category: "Large" },
+        { id: 2, name: "PEPPERONI", price: 55000, category: "Large" },
+        { id: 3, name: "KEJU MANIS", price: 45000, category: "Large" },
+        { id: 4, name: "MIX LOVER", price: 45000, category: "Regular" },
+        { id: 5, name: "PEPPERONI", price: 35000, category: "Regular" },
+        { id: 6, name: "KEJU MANIS", price: 25000, category: "Regular" },
+        { id: 7, name: "EXTRA CHEESE", price: 10000, category: "Extra" },
+        { id: 8, name: "EXTRA TOPPING", price: 15000, category: "Extra" },
+        { id: 9, name: "AIR MINERAL", price: 5000, category: "Minuman" }
+    ],
+    discounts: [
+        { id: 1, name: "Diskon 10%", type: "percentage", value: 0.10 },
+        { id: 2, name: "Potongan Rp 10.000", type: "fixed", value: 10000 }
+    ],
+    transactions: JSON.parse(localStorage.getItem('transactions')) || []
+};
 
-let orderType=null;
-let cart=[];
-let appliedDiscount = null; 
-let currentFinalTotal = 0; // Menyimpan total akhir yang akan dibayar
-let salesChartInstance = null; // Instance Chart.js
+// Utility Functions
+function $(id) { return document.getElementById(id); }
 
-function saveStore(){localStorage.setItem(STORE_KEY,JSON.stringify(store));}
-function formatRp(n){return "Rp "+(n||0).toLocaleString("id-ID");}
-function $(id){return document.getElementById(id);}
-function getDateOnly(dateString) {
-    const d = new Date(dateString);
-    return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-}
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-    return d.getUTCFullYear() + '-' + weekNo;
+function formatRp(amount) {
+    return 'Rp ' + amount.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
 }
 
-function calculatePrice(menu) {
-    if (orderType === 'Online') {
-        return menu.priceOffline + menu.markupOnline;
-    }
-    return menu.priceOffline;
+function getDateOnly(date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    return d.getTime();
 }
 
-// ======================================================================
-// FUNGSI LOGIN / LOGOUT
-// ======================================================================
-function showLogin(){
-  $("appHeader").classList.remove("hidden");
-  $("appNavbar").classList.add("hidden");
-  ["homePage","kasirPage","menuPage","laporanPage"].forEach(id=>$(id).classList.add("hidden"));
-  $("loginPage").classList.remove("hidden");
-  
-  currentUser = null;
-  localStorage.removeItem('currentUser');
-}
+// Global Functions
+function changePage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+    document.getElementById(pageId + 'Page').classList.remove('hidden');
+    
+    document.querySelectorAll('.navbar button').forEach(btn => btn.classList.remove('active-tab'));
+    event.currentTarget.classList.add('active-tab');
 
-function login(){
-  const email=$("email").value.trim(),pass=$("password").value.trim();
-  const u=store.users.find(x=>x.email===email&&x.password===pass);
-  if(!u)return alert("Email atau password salah");
-  
-  currentUser=u;
-  localStorage.setItem('currentUser', JSON.stringify(currentUser));
-  
-  if(currentUser.role === 'Manager'){
-    $("userRoleDisplay").innerText = `Manajer: ${currentUser.email}`;
-  } else {
-    $("userRoleDisplay").innerText = `Kasir: ${currentUser.email}`;
-  }
-  activateTab('home');
-}
-
-function register(){
-  const email=$("email").value.trim(),pass=$("password").value.trim();
-  if(!email||!pass)return alert("Isi email & password");
-  if(store.users.find(u=>u.email===email))return alert("Email sudah terdaftar");
-  store.users.push({email,password:pass, role:'User'}); 
-  saveStore();
-  alert("Akun Kasir berhasil dibuat! Silakan Login.");
-}
-
-function logout(){
-  if(confirm("Yakin logout & cetak closing report?")){
-    printClosing(); 
-    currentUser=null;
-    localStorage.removeItem('currentUser');
-    cart=[];
-    showLogin();
-  }
-}
-// ======================================================================
-// FUNGSI NAVIGASI
-// ======================================================================
-function setActiveTab(tabName) {
-    const navButtons = document.querySelectorAll('#appNavbar button');
-    navButtons.forEach(btn => {
-        btn.classList.remove('active-tab');
-        btn.classList.remove('secondary-nav'); 
-        btn.classList.add('secondary-nav'); 
-    });
-
-    const targetButton = $(`nav-${tabName}`);
-    if (targetButton) {
-        targetButton.classList.add('active-tab');
-        targetButton.classList.remove('secondary-nav'); 
+    if (pageId === 'kasir') {
+        renderMenuSelectorButtons();
+        renderOrderItems();
+    } else if (pageId === 'menu') {
+        renderMenuList();
+    } else if (pageId === 'laporan') {
+        renderReportPage();
     }
 }
 
-function renderAppStructure(){
-  $("appHeader").classList.remove("hidden");
-  $("appNavbar").classList.remove("hidden");
-  ["loginPage"].forEach(id=>$(id).classList.add("hidden"));
-  
-  // Logic untuk menyembunyikan/menampilkan tombol Menu
-  const menuBtn = $("nav-menu");
-  if (menuBtn) {
-    if (currentUser && currentUser.role === 'Manager') {
-      menuBtn.classList.remove('hidden');
-    } else {
-      menuBtn.classList.add('hidden');
-    }
-  }
-}
+// --- Login/Logout ---
+function login() {
+    const email = $("loginEmail").value.toLowerCase();
+    const password = $("loginPassword").value;
+    const user = store.users.find(u => u.email === email && u.password === password);
 
-function openOrderType(){$("orderTypeOverlay").style.display="flex";}
-
-function setOrderType(type){
-    orderType=type;
-    $("orderTypeOverlay").style.display="none";
-    $("orderLabel").innerText="Tipe Order: "+type;
-    renderMenus('Semua'); 
-}
-
-function showKasir(){
-  openOrderType();
-  renderDiscountSelector(); 
-  renderMenus();
-  renderOrders();
-}
-
-function activateTab(tab){
-  renderAppStructure();
-  
-  ["homePage", "kasirPage","menuPage","laporanPage"].forEach(id=>$(id).classList.add("hidden"));
-  
-  if(tab==="home"){
-    $("homePage").classList.remove("hidden");
-  } else if(tab==="kasir"){
-    $("kasirPage").classList.remove("hidden");
-    showKasir(); 
-  } else if(tab==="menu"){
-    if(currentUser && currentUser.role === 'Manager'){
-      $("menuPage").classList.remove("hidden");
-      renderMenuEditor();
-      renderDiscountEditor(); 
-    } else {
-      alert("Akses ditolak. Fitur Tambah Menu hanya untuk Manajer.");
-      activateTab('home'); 
-      return;
-    }
-  } else if(tab==="laporan"){
-    $("laporanPage").classList.remove("hidden");
-    showReport('today'); 
-  }
-  
-  setActiveTab(tab); 
-} 
-// ======================================================================
-// FUNGSI KASIR & TRANSAKSI (Hapus Item & Payment Modal)
-// ======================================================================
-
-function renderMenus(filter = 'Semua'){
-    const root=$("menuList");root.innerHTML="";
-    if(store.menus.length===0){root.innerHTML="<p>Belum ada menu</p>";return;}
-    
-    let filteredMenus = store.menus.filter(m => filter === 'Semua' || m.category === filter);
-    
-    const priceType = orderType === 'Online' ? 'Online' : 'Offline';
-    
-    filteredMenus.forEach(m=>{
-        const price = calculatePrice(m);
-        if (price > 0) {
-            const div=document.createElement("div");div.className="menu-item";
-            
-            const itemName = `${m.name} (${m.category})`;
-            
-            div.innerHTML=`
-                <div><strong>${itemName}</strong></div>
-                <div>${formatRp(price)}</div>
-                <div style="font-size: 0.7em; color: #666;">Harga ${priceType}</div>
-            `;
-            div.onclick=()=>addToCart(m, itemName, price); 
-            root.appendChild(div);
-        }
-    });
-}
-
-function addToCart(m, itemName, price){
-    const f=cart.find(i=>i.name===itemName);
-    if(f)f.qty++;
-    else cart.push({
-        name: itemName, 
-        price: price, 
-        qty: 1, 
-        category: m.category,
-        baseMenuName: m.name 
-    }); 
-    renderOrders();
-}
-
-function deleteFromCart(index) {
-    if (confirm(`Yakin ingin menghapus item ${cart[index].name}?`)) {
-        cart.splice(index, 1);
-        renderOrders();
-    }
-}
-
-function renderOrders(){
-    const root=$("orderList");
-    root.innerHTML="";
-    
-    let subtotal=0;
-    
-    if(cart.length===0){
-        root.innerHTML="<p>Belum ada pesanan</p>";
-        $("totalDisplay").innerText="TOTAL BAYAR: Rp 0";
-        $("discountDisplay").innerText="Diskon: Rp 0";
-        appliedDiscount = null; 
-        $("discountSelector").value = ""; 
-        currentFinalTotal = 0; 
-        return;
-    }
-    
-    cart.forEach((c, index)=>{
-        subtotal+=c.price*c.qty;
-        const d=document.createElement("div");
-        d.className="order-item-detail"; 
-        d.innerHTML=`
-            <div>
-                ${c.name} x${c.qty}
-                <br>
-                <small>${formatRp(c.price*c.qty)}</small>
-            </div>
-            <button class='btn danger delete-btn' onclick='deleteFromCart(${index})'>Hapus</button>
-        `;
-        root.appendChild(d);
-    });
-
-    let discountAmount = 0;
-    let finalTotal = subtotal;
-    let discountDisplay = 'Diskon: Rp 0';
-
-    if (appliedDiscount) {
-        if (appliedDiscount.type === 'percentage') {
-            discountAmount = subtotal * (appliedDiscount.value / 100);
-            discountDisplay = `Diskon (${appliedDiscount.name}): -${formatRp(discountAmount)}`;
-        } else if (appliedDiscount.type === 'amount') {
-            discountAmount = appliedDiscount.value;
-            discountDisplay = `Diskon (${appliedDiscount.name}): -${formatRp(appliedDiscount.value)}`;
-        }
+    if (user) {
+        currentUser = user;
+        localStorage.setItem('currentUser', JSON.stringify(user));
         
-        finalTotal = subtotal - discountAmount;
-        if (finalTotal < 0) finalTotal = 0; 
+        $("loginPage").classList.add('hidden');
+        $("appHeader").classList.remove('hidden');
+        $("userEmailDisplay").innerText = user.email;
+        $("userRoleDisplay").innerText = user.role;
+        
+        // Redirect to Home Page
+        changePage('home'); 
+        
+        // Initial setup for Kasir/Laporan
+        renderDiscountSelect();
+        renderMenuSelectorButtons();
+    } else {
+        alert("Email atau password salah.");
     }
-    
-    const subtotalRef = document.createElement("div");
-    subtotalRef.innerHTML = `<h4 style="margin: 5px 0; color: #666;">Subtotal: ${formatRp(subtotal)}</h4>`;
-    root.appendChild(subtotalRef);
-    
-    $("discountDisplay").innerText = discountDisplay;
-    $("totalDisplay").innerText="TOTAL BAYAR: "+formatRp(finalTotal);
-    
-    currentFinalTotal = finalTotal; 
 }
 
+function logout() {
+    currentUser = null;
+    localStorage.removeItem('currentUser');
+    localStorage.removeItem('cart');
+    cart = [];
+    changePage('login');
+    $("appHeader").classList.add('hidden');
+}
+
+// --- Menu Rendering ---
+function renderMenuList() {
+    const menuList = $("menuList");
+    menuList.innerHTML = '';
+    
+    store.menu.forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'menu-item';
+        d.innerHTML = `
+            <strong>${item.name}</strong>
+            <p style="font-size: 0.9em; color: #555;">(${item.category})</p>
+            <p style="color: green;">${formatRp(item.price)}</p>
+        `;
+        menuList.appendChild(d);
+    });
+}
+
+function renderMenuSelectorButtons() {
+    const categories = Array.from(new Set(store.menu.map(item => item.category)));
+    const container = $("menuSelectorButtons");
+    container.innerHTML = `<button class="btn secondary" onclick="filterMenu('Semua', this)">Semua</button>`;
+    
+    categories.forEach(cat => {
+        container.innerHTML += `<button class="btn secondary" onclick="filterMenu('${cat}', this)">${cat}</button>`;
+    });
+    
+    // Default filter to "Semua"
+    filterMenu('Semua', container.querySelector('button'));
+}
+
+function filterMenu(category, buttonElement) {
+    document.querySelectorAll('#menuSelectorButtons button').forEach(btn => {
+        btn.classList.remove('active-tab');
+    });
+    if (buttonElement) {
+        buttonElement.classList.add('active-tab');
+    }
+
+    const filteredMenu = category === 'Semua' ? store.menu : store.menu.filter(item => item.category === category);
+    
+    const menuList = $("menuList");
+    menuList.innerHTML = ''; // Clear previous menu
+    
+    filteredMenu.forEach(item => {
+        const d = document.createElement('div');
+        d.className = 'menu-item';
+        d.onclick = () => addToCart(item);
+        d.innerHTML = `
+            <strong>${item.name}</strong>
+            <p style="font-size: 0.9em; color: #555;">(${item.category})</p>
+            <p style="color: green;">${formatRp(item.price)}</p>
+        `;
+        menuList.appendChild(d);
+    });
+}
+
+// --- Cart/Order Management ---
+function addToCart(menuItem) {
+    const existingItem = cart.find(item => item.id === menuItem.id);
+    
+    if (existingItem) {
+        existingItem.qty += 1;
+    } else {
+        cart.push({ ...menuItem, qty: 1 });
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderOrderItems();
+}
+
+function renderOrderItems() {
+    const orderItems = $("orderItems");
+    let subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    orderItems.innerHTML = '';
+    
+    cart.forEach(item => {
+        const itemTotal = item.price * item.qty;
+        const d = document.createElement('div');
+        d.className = 'order-item-detail';
+        d.innerHTML = `
+            <div>
+                <strong style="font-size: 1.1em;">${item.name}</strong> <span style="font-size: 0.9em; color: #777;">(${item.category})</span><br>
+                ${item.qty} x ${formatRp(item.price)} = ${formatRp(itemTotal)}
+            </div>
+            <div>
+                <button class="btn secondary" style="padding: 3px 6px; margin-right: 5px;" onclick="changeQty(${item.id}, 1)">+</button>
+                <button class="btn secondary" style="padding: 3px 6px;" onclick="changeQty(${item.id}, -1)">-</button>
+                <button class="btn danger delete-btn" onclick="removeFromCart(${item.id})">X</button>
+            </div>
+        `;
+        orderItems.appendChild(d);
+    });
+
+    if (cart.length === 0) {
+        orderItems.innerHTML = '<p>Keranjang kosong.</p>';
+    }
+    
+    // Re-apply discount
+    applyDiscount();
+    
+    // Update Order Type
+    orderType = $("orderType").value;
+}
+
+function changeQty(id, delta) {
+    const item = cart.find(i => i.id === id);
+    if (item) {
+        item.qty += delta;
+        if (item.qty <= 0) {
+            removeFromCart(id);
+        } else {
+            localStorage.setItem('cart', JSON.stringify(cart));
+            renderOrderItems();
+        }
+    }
+}
+
+function removeFromCart(id) {
+    cart = cart.filter(item => item.id !== id);
+    localStorage.setItem('cart', JSON.stringify(cart));
+    renderOrderItems();
+}
+
+// --- Discount Management ---
+function renderDiscountSelect() {
+    const select = $("discountSelect");
+    select.innerHTML = '<option value="">Tidak Ada</option>';
+    
+    store.discounts.forEach(disc => {
+        select.innerHTML += `<option value="${disc.id}">${disc.name}</option>`;
+    });
+}
+
+function applyDiscount() {
+    let subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    const selectedDiscountId = $("discountSelect").value;
+    let discountAmount = 0;
+    
+    if (selectedDiscountId) {
+        const discount = store.discounts.find(d => d.id === parseInt(selectedDiscountId));
+        if (discount) {
+            if (discount.type === 'percentage') {
+                discountAmount = subtotal * discount.value;
+            } else if (discount.type === 'fixed') {
+                discountAmount = discount.value;
+            }
+        }
+    }
+    
+    const finalTotal = subtotal - discountAmount;
+    currentFinalTotal = finalTotal;
+    
+    $("discountDisplay").innerText = formatRp(discountAmount);
+    $("totalDisplay").innerText = formatRp(finalTotal);
+}
+
+// --- Payment ---
+// FIX 2: Fungsi openPaymentModal() diperbarui untuk menyembunyikan tombol Bayar Pas
 function openPaymentModal() {
     if (cart.length === 0) return alert("Keranjang masih kosong.");
     
@@ -614,303 +564,124 @@ function openPaymentModal() {
     
     $("modalTotal").innerText = `Total Akhir: ${formatRp(currentFinalTotal)}`;
     $("paymentModal").style.display = "flex";
-}
 
-function openQrisModal() {
-    $("paymentModal").style.display = "none";
-    $("qrisModal").style.display = "flex";
-}
-
-function confirmQrisPayment() {
-    completePayment('QRIS', currentFinalTotal);
+    // FIX 2: SEMBUNYIKAN TOMBOL BAYAR PAS JIKA ORDER TYPE = ONLINE
+    const btnBayarPas = $("btnBayarPas");
+    if (btnBayarPas) {
+        if (orderType === 'Online') {
+            btnBayarPas.style.display = 'none';
+        } else {
+            btnBayarPas.style.display = 'block'; // Tampilkan lagi jika Offline
+        }
+    }
 }
 
 function processManualPayment() {
-    const bayar = Number($("manualBayar").value);
-    if (bayar < currentFinalTotal) return alert("Nominal bayar kurang dari total akhir.");
-    
-    completePayment('Cash', bayar); 
+    const bayar = parseFloat($("manualBayar").value) || 0;
+    if (bayar < currentFinalTotal) {
+        return alert(`Nominal bayar kurang. Kurang ${formatRp(currentFinalTotal - bayar)}`);
+    }
+    completePayment('Cash', bayar);
 }
 
-function completePayment(method, paidAmount = null) {
-    let subtotal = cart.reduce((a,b)=>a+b.price*b.qty,0);
+function openQrisModal() {
+    $("qrisAmount").innerText = formatRp(currentFinalTotal);
+    $("paymentModal").style.display = 'none';
+    $("qrisModal").style.display = 'flex';
+}
+
+function completePayment(method, cashGiven = 0) {
+    if (cart.length === 0) {
+        alert("Keranjang kosong.");
+        return;
+    }
     
+    const subtotal = cart.reduce((acc, item) => acc + (item.price * item.qty), 0);
+    const selectedDiscountId = $("discountSelect").value;
+    const discount = selectedDiscountId ? store.discounts.find(d => d.id === parseInt(selectedDiscountId)) : null;
     let discountAmount = 0;
-    if (appliedDiscount) {
-        if (appliedDiscount.type === 'percentage') {
-            discountAmount = subtotal * (appliedDiscount.value / 100);
-        } else if (appliedDiscount.type === 'amount') {
-            discountAmount = appliedDiscount.value;
+
+    if (discount) {
+        if (discount.type === 'percentage') {
+            discountAmount = subtotal * discount.value;
+        } else if (discount.type === 'fixed') {
+            discountAmount = discount.value;
         }
     }
-    const finalTotal = currentFinalTotal; 
-    
-    let bayar = paidAmount;
-    let change = 0;
 
-    if (method === 'Cash' || method === 'QRIS' || method === 'Gojek' || method === 'Grab' || method === 'Shopee') {
-        if (bayar === null) {
-            bayar = finalTotal;
-        }
-        
-        if (method === 'Cash') {
-            change = bayar - finalTotal; 
-            if (change < 0) return alert("Nominal bayar (Cash) kurang dari total akhir. Gunakan input manual.");
-        } else {
-            bayar = finalTotal;
-            change = 0;
-        }
-    }
-    
-    // TUTUP SEMUA MODAL
-    $("paymentModal").style.display="none";
-    $("qrisModal").style.display="none";
-
-    if (method === 'Cash' && change > 0) {
-        alert("Pembayaran Tunai sukses.\nKembalian: "+formatRp(change));
-    } else if (method !== 'Cash') {
-        alert("Pembayaran "+method+" sukses!");
-    } else {
-        alert("Pembayaran Tunai Pas sukses!");
-    }
-    
-    const customerNote = $("customerNote").value.trim() || "Tunai"; 
-    
-    saveTransaction(subtotal, discountAmount, finalTotal, customerNote, method); 
-    printStruk(subtotal, discountAmount, finalTotal, bayar, change, customerNote, method); 
-    
-    appliedDiscount = null; 
-    $("discountSelector").value = ""; 
-    cart=[];
-    renderOrders();
-    $("customerNote").value = ""; 
-    openOrderType();
-}
-function saveTransaction(subtotal, discountAmount, finalTotal, customerNote, paymentMethod){
-    store.transactions.push({
-        id:Date.now(),
-        user:currentUser.email,
-        orderType,
-        paymentMethod, 
-        items:[...cart],
-        subtotal: subtotal, 
-        discount: appliedDiscount, 
-        discountAmount: discountAmount, 
-        total: finalTotal, 
-        date:new Date().toISOString(),
-        note: customerNote 
-    });
-    saveStore();
-}
-
-function printStruk(subtotal, discountAmount, finalTotal, bayar, kembali, note, paymentMethod){
-    const now = new Date().toLocaleString("id-ID");
-    const MAX_WIDTH = 42; 
-
-    const createStrukLine = (name, qty, price) => {
-        const totalStr = formatRp(price * qty).padStart(12);
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${qty}`;
-        const space = MAX_WIDTH - namePart.length - totalStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalStr}`; 
-    };
-    
-    const noteLine = `Pelanggan: ${note.substring(0, MAX_WIDTH - 11)}`; 
-
-    const discountText = appliedDiscount ? 
-        `Diskon (${appliedDiscount.name.substring(0, 15)}): -${formatRp(discountAmount).padStart(12)}` : '';
-    
-    const w=window.open("","_blank");
-    w.document.write(`
-    <pre>
-🍕 JIF PIZZA CONDET
-Kasir: ${currentUser.email}
-Tanggal: ${now}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-${cart.map(i => createStrukLine(i.name, i.qty, i.price)).join('\n')}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-Subtotal:     ${formatRp(subtotal).padStart(12)}
-${discountText ? discountText + '\n' : ''}${`Total Akhir:  ${formatRp(finalTotal).padStart(12)}`}
-${(paymentMethod === 'Cash' || paidAmount > finalTotal) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
-Metode Bayar: ${paymentMethod}
-Order: ${orderType}
-${noteLine}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-Terima kasih!
-        </pre>
-    `);
-    w.print();
-}
-
-// ======================================================================
-// FUNGSI MANAJEMEN MENU & DISKON
-// ======================================================================
-function addMenu(){
-    const name=$("mName").value.trim();
-    const category=$("mCategory").value;
-    const priceOffline=Number($("mPriceOffline").value);
-    const markupOnline=Number($("mOnlineMarkup").value);
-
-    if(!name || !category || !priceOffline) return alert("Isi Nama Menu, Kategori, dan Harga Offline.");
-    
-    const uniqueItemName = `${name} (${category})`;
-
-    if(store.menus.find(m => m.uniqueName === uniqueItemName)) return alert("Menu dengan nama dan kategori ini sudah ada. Hapus dulu untuk mengubah.");
-
-    const menuData = { 
-        name: name, 
-        category: category,
-        uniqueName: uniqueItemName,
-        priceOffline: priceOffline,
-        markupOnline: markupOnline,
-        isExtra: category === 'Extra' 
+    const transaction = {
+        id: Date.now(),
+        date: new Date().toISOString(),
+        user: currentUser.email,
+        items: cart,
+        subtotal: subtotal,
+        discount: discount,
+        discountAmount: discountAmount,
+        total: currentFinalTotal,
+        paymentMethod: method,
+        orderType: $("orderType").value,
+        note: $("customerNote").value || 'Pelanggan Tunai',
+        cashGiven: cashGiven,
+        change: cashGiven > currentFinalTotal ? cashGiven - currentFinalTotal : 0 
     };
 
-    store.menus.push(menuData);
-    saveStore();
-    
-    $("mName").value=""; 
-    $("mCategory").value="";
-    $("mPriceOffline").value=""; 
-    $("mOnlineMarkup").value=""; 
+    store.transactions.push(transaction);
+    localStorage.setItem('transactions', JSON.stringify(store.transactions));
 
-    renderMenus();
-    renderMenuEditor();
+    // Print Receipt
+    printReceipt(transaction);
+
+    // Reset
+    cart = [];
+    localStorage.removeItem('cart');
+    currentFinalTotal = 0;
+    $("customerNote").value = '';
+    $("discountSelect").value = '';
+    
+    // Close Modals
+    $("paymentModal").style.display = 'none';
+    $("qrisModal").style.display = 'none';
+    
+    // Re-render
+    renderOrderItems();
+    alert(`Transaksi Selesai. Kembalian: ${formatRp(transaction.change)}`);
+}
+// --- Laporan ---
+function renderReportPage() {
+    const allTrx = getFilteredTransactions(); // Get all to display summary initially
+    renderSummary(allTrx, "Semua Transaksi");
+    renderSalesByMenu(allTrx);
+    renderTransactionDetails(allTrx);
+    
+    // Reset active button
+    document.querySelectorAll('#laporanPage button.active-tab').forEach(btn => btn.classList.remove('active-tab'));
+    $("reportDate").value = ''; // Clear date input
 }
 
-function renderMenuEditor(){
-    const root=$("menuEditor");
-    root.innerHTML="";
-    
-    store.menus.forEach((m,i)=>{
-        const priceOffline = formatRp(m.priceOffline);
-        const priceOnline = formatRp(m.priceOffline + m.markupOnline);
-        const markup = formatRp(m.markupOnline);
-
-        const priceDetail = `OFFLINE: ${priceOffline} | ONLINE: ${priceOnline} (+${markup})`;
-
-        const div=document.createElement("div");
-        div.className="menu-item";
-        div.innerHTML=`
-            <div>
-                <strong>${m.name} (${m.category})</strong><br>
-                <small>${priceDetail}</small>
-            </div>
-            <button class='btn danger' onclick='delMenu(${i})'>Hapus</button>
-        `;
-        root.appendChild(div);
-    });
-}
-function delMenu(i){store.menus.splice(i,1);saveStore();renderMenus();renderMenuEditor();}
-
-function addDiscount(){
-    if(!currentUser || currentUser.role!=='Manager') return alert("Akses ditolak. Hanya Manajer yang dapat mengelola diskon.");
-    
-    const name=$("dName").value.trim();
-    const type=$("dType").value;
-    const value=Number($("dValue").value);
-
-    if(!name || !type || !value) return alert("Isi Nama Diskon, Tipe, dan Nilai.");
-    
-    if(store.discounts.find(d => d.name === name)) return alert("Nama diskon sudah ada.");
-    
-    store.discounts.push({ 
-        name, 
-        type,
-        value: value
-    });
-
-    saveStore();
-    
-    $("dName").value=""; 
-    $("dType").value="";
-    $("dValue").value=""; 
-
-    renderDiscountEditor();
-    renderDiscountSelector(); 
-}
-
-function renderDiscountEditor(){
-    const root=$("discountEditor");
-    root.innerHTML="";
-    
-    if(store.discounts.length === 0) {
-        root.innerHTML = "<p>Belum ada diskon terdaftar.</p>";
-        return;
+function filterTransactions(type, element) {
+    document.querySelectorAll('#laporanPage button').forEach(btn => btn.classList.remove('active-tab'));
+    if (element && element.tagName === 'BUTTON') {
+        element.classList.add('active-tab');
     }
 
-    store.discounts.forEach((d,i)=>{
-        const displayType = d.type === 'percentage' ? 'Persen' : 'Nominal';
-        const displayValue = d.type === 'percentage' ? `${d.value}%` : formatRp(d.value);
-        
-        const div=document.createElement("div");
-        div.className="menu-item";
-        div.innerHTML=`
-            <div>
-                <strong>${d.name}</strong><br>
-                <small>Tipe: ${displayType} | Nilai: ${displayValue}</small>
-            </div>
-            <button class='btn danger' onclick='delDiscount(${i})'>Hapus</button>
-        `;
-        root.appendChild(div);
-    });
-}
-function delDiscount(i){
-    if (appliedDiscount && appliedDiscount.name === store.discounts[i]?.name) {
-        appliedDiscount = null;
+    const dateInputTrigger = type === 'date';
+    const filteredTrx = getFilteredTransactions(type, dateInputTrigger);
+
+    let filterLabel = "Semua Transaksi";
+    if (type === 'today') filterLabel = "Hari Ini";
+    else if (type === 'yesterday') filterLabel = "Kemarin";
+    else if (type === 'month') {
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        filterLabel = `Bulan ${monthNames[new Date().getMonth()]} ${new Date().getFullYear()}`;
     }
-    store.discounts.splice(i,1);
-    saveStore();
-    renderDiscountEditor();
-    renderOrders(); 
-    renderDiscountSelector();
+    else if (dateInputTrigger) filterLabel = $("reportDate").value;
+
+    renderSummary(filteredTrx, filterLabel);
+    renderSalesByMenu(filteredTrx);
+    renderTransactionDetails(filteredTrx);
 }
 
-function renderDiscountSelector() {
-    const selector = $("discountSelector");
-    if (!selector) return; 
-
-    selector.innerHTML = '<option value="">-- Pilih Diskon (Tidak Ada) --</option>';
-    
-    store.discounts.forEach((d, index) => {
-        const display = d.type === 'percentage' ? `${d.value}%` : formatRp(d.value);
-        selector.innerHTML += `<option value="${index}">${d.name} (${display})</option>`;
-    });
-
-    if (appliedDiscount) {
-        const index = store.discounts.findIndex(d => d.name === appliedDiscount.name);
-        if (index !== -1) selector.value = index;
-    }
-}
-
-function applyDiscount() {
-    const selector = $("discountSelector");
-    const index = selector.value;
-    
-    if (index === "") {
-        appliedDiscount = null;
-    } else {
-        appliedDiscount = store.discounts[parseInt(index)];
-    }
-    renderOrders();
-}
-
-function deleteTransaction(id) {
-    if (!currentUser || currentUser.role !== 'Manager') {
-        alert("Akses ditolak. Hanya Manajer yang dapat menghapus transaksi.");
-        return;
-    }
-
-    if (confirm(`Yakin ingin menghapus Transaksi ID: ${id}? Tindakan ini tidak dapat dibatalkan.`)) {
-        store.transactions = store.transactions.filter(t => t.id !== id);
-        saveStore();
-        alert("Transaksi berhasil dihapus.");
-        showReport('today'); 
-    }
-}
-  // ======================================================================
-// FUNGSI LAPORAN, GRAFIK, DAN CETAK
-// ======================================================================
-
+// FIX 4: Fungsi getFilteredTransactions() diperbaiki untuk filter bulanan
 function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
     const transactions = store.transactions;
     const now = new Date();
@@ -933,7 +704,8 @@ function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
         endDate = startDate;
     } else if (filterType === 'month') {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime(); 
+        // FIX 4: Menentukan hari pertama bulan berikutnya sebagai batas akhir (exclusive)
+        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 1).getTime(); 
     } 
 
     if (startDate !== null) {
@@ -944,7 +716,8 @@ function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
                 return trxDateOnly === startDate;
             }
             if (filterType === 'month') {
-                return trxDateOnly >= startDate && trxDateOnly <= endDate;
+                // Gunakan < endDate (lebih kecil dari)
+                return trxDateOnly >= startDate && trxDateOnly < endDate; 
             }
             return false;
         });
@@ -953,131 +726,7 @@ function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
 }
 
 
-function showReport(filterType = 'today', dateInputTrigger = false){
-    let reportPeriod;
-    let activeFilter = filterType; 
-    let selectedDate = null; 
-
-    if (dateInputTrigger) {
-        selectedDate = $("reportDate").value;
-        if (!selectedDate) {
-            alert("Silakan pilih tanggal terlebih dahulu.");
-            return;
-        }
-        reportPeriod = new Date(selectedDate).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-        activeFilter = null; 
-    } else if (filterType === 'today') {
-        reportPeriod = 'Hari Ini';
-    } else if (filterType === 'yesterday') {
-        reportPeriod = 'Kemarin';
-    } else if (filterType === 'month') {
-        reportPeriod = 'Bulan Ini';
-    } else {
-        reportPeriod = 'Semua Transaksi';
-    }
-    
-    const filteredTrx = getFilteredTransactions(activeFilter, dateInputTrigger);
-
-    renderSummary(filteredTrx, reportPeriod);
-    renderSalesByMenu(filteredTrx); 
-    renderTransactionDetails(filteredTrx);
-    renderSalesGraph(filteredTrx, activeFilter, selectedDate); 
-}
-
-// FUNGSI GRAFIK (Chart.js)
-function renderSalesGraph(transactions, filterType, selectedDate) {
-    const canvas = $("salesChart");
-    if (salesChartInstance) {
-        salesChartInstance.destroy();
-    }
-    
-    let labels = [];
-    let salesData = [];
-    let title = "Grafik Penjualan";
-
-    if (filterType === 'today' || (selectedDate && getDateOnly(selectedDate) === getDateOnly(new Date()))) {
-        // Harian (Per Jam)
-        title = "Grafik Penjualan Harian (Per Jam)";
-        for (let i = 0; i < 24; i++) {
-            labels.push(`${i}:00 - ${i+1}:00`);
-            salesData.push(0);
-        }
-        transactions.forEach(t => {
-            const hour = new Date(t.date).getHours();
-            if (hour >= 0 && hour < 24) {
-                salesData[hour] += t.total;
-            }
-        });
-    } else if (filterType === 'month' || selectedDate) {
-        // Bulanan (Per Hari)
-        title = "Grafik Penjualan Per Hari";
-        let dateMap = {};
-        let start, end;
-
-        if (filterType === 'month') {
-            start = new Date(new Date().getFullYear(), new Date().getMonth(), 1);
-            end = new Date(new Date().getFullYear(), new Date().getMonth() + 1, 0);
-        } else if (selectedDate) {
-            if (getDateOnly(new Date(selectedDate)) === getDateOnly(new Date(selectedDate))) {
-                return renderSalesGraph(transactions, 'today', selectedDate); 
-            }
-        }
-        
-        for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-            const dateStr = new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-            labels.push(dateStr);
-            dateMap[getDateOnly(d)] = labels.length - 1; 
-            salesData.push(0);
-        }
-        
-        transactions.forEach(t => {
-            const dayKey = getDateOnly(t.date);
-            const index = dateMap[dayKey];
-            if (index !== undefined) {
-                salesData[index] += t.total;
-            }
-        });
-    }
-
-    const ctx = canvas.getContext('2d');
-    salesChartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Total Penjualan Bersih',
-                data: salesData,
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            if (parseInt(value) >= 1000) {
-                                return 'Rp ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                            } else {
-                                return 'Rp ' + value;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: title
-                }
-            }
-        }
-    });
-}
-
+// FIX 3: Fungsi renderSummary() diperbaiki untuk format ** menjadi <strong> (tampilan rapi)
 function renderSummary(filteredTrx, filter) {
     const root = $("laporanSummary");
     const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
@@ -1091,62 +740,56 @@ function renderSummary(filteredTrx, filter) {
         salesByOutlet[outlet] = (salesByOutlet[outlet] || 0) + t.total;
     });
     
+    // FIX 3: Menggunakan <strong> untuk tampilan yang rapi
     let outletHtml = Object.entries(salesByOutlet).map(([type, total]) => 
-        `<p style="margin-left: 10px;">- ${type}: **${formatRp(total)}**</p>`
+        `<p style="margin-left: 10px;">- ${type}: <strong>${formatRp(total)}</strong></p>`
     ).join('');
 
+    // FIX 3: Menggunakan <strong> untuk tampilan yang rapi
     root.innerHTML = `
-        <p>Periode Laporan: **${filter}**</p> 
-        <p>Total Transaksi: **${totalCount}** Nota</p>
+        <p>Periode Laporan: <strong>${filter}</strong></p> 
+        <p>Total Transaksi: <strong>${totalCount}</strong> Nota</p>
         <p style="font-weight: bold; margin-top: 10px;">Sales Outlet:</p>
         ${outletHtml}
-        <p style="font-size: 1.0em; color: #666; margin-top: 10px;">Subtotal Kotor: **${formatRp(totalSubtotal)}**</p>
-        <p style="font-size: 1.0em; color: #c62828;">Diskon Total: **${formatRp(totalDiscount)}**</p>
-        <p style="font-size: 1.2em; color: #2e7d32;">Total Penjualan Bersih: **${formatRp(totalSales)}**</p>
+        <p style="font-size: 1.0em; color: #666; margin-top: 10px;">Subtotal Kotor: <strong>${formatRp(totalSubtotal)}</strong></p>
+        <p style="font-size: 1.0em; color: #c62828;">Diskon Total: <strong>${formatRp(totalDiscount)}</strong></p>
+        <p style="font-size: 1.2em; color: #2e7d32;">Total Penjualan Bersih: <strong>${formatRp(totalSales)}</strong></p>
     `;
 }
 
+// FIX 5: Fungsi renderSalesByMenu() menerapkan sorting menu terlaris
 function renderSalesByMenu(filteredTrx) {
-    const root = $("salesByMenu");
+    const root = $("laporanMenuMix");
     let menuMix = {};
-
+    
     filteredTrx.forEach(t => {
         t.items.forEach(item => {
-            if (!menuMix[item.name]) { 
-                menuMix[item.name] = { qty: 0, total: 0 };
-            }
-            menuMix[item.name].qty += item.qty;
-            menuMix[item.name].total += item.price * item.qty;
+            const key = `${item.name} (${item.category})`;
+            menuMix[key] = menuMix[key] || { qty: 0, total: 0 };
+            menuMix[key].qty += item.qty;
+            menuMix[key].total += item.qty * item.price;
         });
     });
 
-    if (Object.keys(menuMix).length === 0) {
-        root.innerHTML = "<p>Tidak ada penjualan menu di periode ini.</p>";
+    // FIX 5: Sorting berdasarkan QTY Terjual (QTY) dari terbesar ke terkecil
+    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty); 
+
+    if (sortedMenu.length === 0) {
+        root.innerHTML = "<p>Tidak ada data menu yang terjual.</p>";
         return;
     }
 
-    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty); 
-
-    let html = `<table class="report-table">
-        <thead>
-            <tr><th>Nama Menu (Ukuran/Topping)</th><th>QTY Terjual</th><th>Total Penjualan</th></tr>
-        </thead>
-        <tbody>`;
-
-    sortedMenu.forEach(([name, data]) => {
-        html += `
-            <tr>
-                <td>${name}</td>
-                <td>${data.qty}</td>
-                <td>${formatRp(data.total)}</td>
-            </tr>
-        `;
+    let html = '<table class="report-table"><thead><tr><th>Nama Menu (Ukuran/Topping)</th><th>QTY Terjual</th><th>Total Penjualan</th></tr></thead><tbody>';
+    
+    sortedMenu.forEach(([key, data]) => {
+        html += `<tr><td>${key}</td><td>${data.qty}</td><td>${formatRp(data.total)}</td></tr>`;
     });
 
-    html += `</tbody></table>`;
+    html += '</tbody></table>';
     root.innerHTML = html;
 }
 
+// FIX 3: Fungsi renderTransactionDetails() diperbaiki untuk format **
 function renderTransactionDetails(filteredTrx) {
     const root=$("laporanList");
     root.innerHTML="";
@@ -1176,8 +819,7 @@ function renderTransactionDetails(filteredTrx) {
         const paymentMethod = t.paymentMethod || 'Tunai'; 
 
         d.innerHTML=`
-            <div>**Nota ID: ${t.id}**</div>
-            <div>Waktu: ${new Date(t.date).toLocaleString("id-ID")}<br>Pelanggan/Driver: ${noteDisplay}<br>${t.orderType} | Bayar: ${paymentMethod} oleh Kasir: ${t.user}</div>
+            <div><strong>Nota ID: ${t.id}</strong></div> <div>Waktu: ${new Date(t.date).toLocaleString("id-ID")}<br>Pelanggan/Driver: ${noteDisplay}<br>${t.orderType} | Bayar: ${paymentMethod} oleh Kasir: ${t.user}</div>
             <p style="margin: 5px 0;">Item: ${t.items.map(i => `${i.name} x${i.qty}`).join(', ')}</p>
             <div style="margin: 5px 0;">${subtotalDisplay}</div>
             ${discountDisplay} 
@@ -1188,162 +830,115 @@ function renderTransactionDetails(filteredTrx) {
     });
 }
 
-function printClosing(){
-    if(!currentUser || currentUser.role!=='Manager') return alert("Hanya Manajer yang dapat mencetak closing report.");
-    
-    const today = new Date().toLocaleDateString("id-ID");
-    const trx = store.transactions.filter(t => new Date(t.date).toLocaleDateString("id-ID") === today);
+function deleteTransaction(id) {
+    if (confirm("Anda yakin ingin menghapus transaksi ini? Tindakan ini TIDAK dapat dibatalkan.")) {
+        store.transactions = store.transactions.filter(t => t.id !== id);
+        localStorage.setItem('transactions', JSON.stringify(store.transactions));
+        renderReportPage();
+        alert("Transaksi berhasil dihapus.");
+    }
+}
 
-    if(trx.length === 0) return alert("Tidak ada transaksi untuk hari ini.");
+// --- Printing Functions ---
 
-    const totalSubtotal = trx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
-    const totalDiscount = trx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
-    const totalSales = trx.reduce((acc, t) => acc + t.total, 0);
+function printReceipt(trx) {
+    const MAX_WIDTH = 40; 
+    const w = window.open("", "Print Receipt", "width=400,height=600");
 
-    const MAX_WIDTH = 42; 
-
-    const padLine = (label, value) => { 
-        const valueStr = String(value);
-        const labelLen = label.length;
-        const space = MAX_WIDTH - labelLen - valueStr.length;
-        return `${label}${Array(space > 0 ? space : 1).join('.')}${valueStr}`; 
+    const padLine = (label, value) => {
+        const spaceCount = MAX_WIDTH - label.length - value.length;
+        return label + ' '.repeat(Math.max(0, spaceCount)) + value;
     };
 
-    let salesByPayment = {};
-    trx.forEach(t => {
-        const method = t.paymentMethod || 'Tunai';
-        salesByPayment[method] = (salesByPayment[method] || 0) + t.total;
+    let receiptContent = 
+`        === JIF PIZZA CONDET ===
+ ${new Date().toLocaleString("id-ID")}
+ Kasir: ${trx.user}
+ Nota: ${trx.id}
+ ${padLine("Order Type:", trx.orderType)}
+ ${padLine("Catatan:", trx.note)}
+ ${'------------------------------------------'.substring(0, MAX_WIDTH)}
+`;
+    
+    trx.items.forEach(item => {
+        const itemTotal = formatRp(item.price * item.qty);
+        const itemName = `${item.name} (${item.category})`;
+        receiptContent += `${itemName}\n`;
+        receiptContent += padLine(`   ${item.qty} x ${formatRp(item.price)}`, itemTotal) + '\n';
     });
 
-    const paymentDetail = Object.entries(salesByPayment).map(([method, total]) => 
-        padLine(`- ${method}:`, formatRp(total))
-    ).join('\n');
+    const subtotalLine = padLine("Subtotal:", formatRp(trx.subtotal));
+    const discountLine = padLine(`Diskon (${trx.discount ? trx.discount.name : '0'}):`, `-${formatRp(trx.discountAmount)}`);
+    const totalLine = padLine("TOTAL AKHIR:", formatRp(trx.total));
+    const paymentLine = padLine(`Bayar (${trx.paymentMethod}):`, formatRp(trx.cashGiven || trx.total));
+    const changeLine = padLine("Kembali:", formatRp(trx.change || 0));
 
+    receiptContent += 
+`${'------------------------------------------'.substring(0, MAX_WIDTH)}
+${subtotalLine}
+${discountLine}
+${totalLine}
+${'------------------------------------------'.substring(0, MAX_WIDTH)}
+${paymentLine}
+${changeLine}
 
-    const menuMix = {};
-    trx.forEach(t => t.items.forEach(item => {
-        if (!menuMix[item.name]) { 
-            menuMix[item.name] = { qty: 0, total: 0 };
-        }
-        menuMix[item.name].qty += item.qty;
-        menuMix[item.name].total += item.price * item.qty;
-    }));
-    
-    const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.total).padStart(12); 
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${data.qty}`; 
-        const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
-    };
-
-    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
-    const menuDetail = sortedMenu.map(([name, data]) => createReportLine(name, data)).join('\n');
-
-
-    const w=window.open("","_blank");
-    
-    const kasirLine = padLine("Manajer/Kasir: ", currentUser ? currentUser.email : "-");
-    const dateLine = padLine("Tanggal Cetak: ", new Date().toLocaleString("id-ID"));
-    const totalTrxLine = padLine("Total Transaksi: ", `${trx.length} Nota`);
+ --- Terima Kasih & Sampai Jumpa ---
+`;
 
     w.document.write(`
         <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 80mm; max-width: 80mm;'>
- === CLOSING REPORT HARIAN ===
-        
- Outlet: JIF PIZZA CONDET
-${kasirLine}
-${dateLine}
-        
-${'__________________________________________'.substring(0, MAX_WIDTH)} 
-RINGKASAN PENJUALAN
-${totalTrxLine}
-${padLine("Subtotal Kotor: ", formatRp(totalSubtotal))}
-${padLine("Diskon Total: ", formatRp(totalDiscount))}
-${padLine("TOTAL PENJUALAN AKHIR: ", formatRp(totalSales))}
-
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-SALES BY PAYMENT METHOD
-${paymentDetail}
-
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-SALES BY MENU (PRODUCT MIX)
-${menuDetail.trim()}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-==========================================
-TERIMA KASIH, LAPORAN SELESAI
+            ${receiptContent.trim()}
         </pre>
     `);
+    w.document.close(); 
     w.print();
+    w.close(); 
 }
 
 function printReport() {
-    const dateInputTrigger = $("reportDate").value ? true : false;
-    let activeFilter = 'today'; 
-    if (dateInputTrigger) {
-        activeFilter = null; 
-    } 
+    const MAX_WIDTH = 42; 
+    const w = window.open("", "Print Report", "width=500,height=800");
 
-    const filteredTrx = getFilteredTransactions(activeFilter, dateInputTrigger);
-    
-    if (filteredTrx.length === 0) {
-        return alert("Tidak ada transaksi dalam periode ini untuk dicetak.");
-    }
-    
-    let reportPeriod;
-    if (dateInputTrigger) {
-         reportPeriod = new Date($("reportDate").value).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-    } else if (activeFilter === 'today') {
-        reportPeriod = 'Hari Ini';
-    } else if (activeFilter === 'yesterday') {
-        reportPeriod = 'Kemarin';
-    } else if (activeFilter === 'month') {
-        reportPeriod = 'Bulan Ini';
-    } else {
-        reportPeriod = 'Semua Transaksi';
-    }
+    const padLine = (label, value) => {
+        const spaceCount = MAX_WIDTH - label.length - value.length;
+        return label + ' '.repeat(Math.max(0, spaceCount)) + value;
+    };
 
+    const filteredTrx = getFilteredTransactions($('laporanPage').querySelector('.active-tab')?.onclick.toString().match(/filterTransactions\('(\w+)'/)?.[1] || null, $('reportDate').value !== '');
+    const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
     const totalSubtotal = filteredTrx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
     const totalDiscount = filteredTrx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
-    const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
     
+    // Summary Text
+    let reportPeriod = $("laporanSummary").querySelector('strong').innerText;
+
+    // Sales by Outlet Detail
     let salesByOutlet = {};
     filteredTrx.forEach(t => {
         const outlet = t.orderType || 'N/A';
         salesByOutlet[outlet] = (salesByOutlet[outlet] || 0) + t.total;
     });
-
-    const menuMix = {};
-    filteredTrx.forEach(t => t.items.forEach(item => {
-        if (!menuMix[item.name]) { menuMix[item.name] = { qty: 0, total: 0 }; }
-        menuMix[item.name].qty += item.qty;
-        menuMix[item.name].total += item.price * item.qty;
-    }));
-
-    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
-    
-    const MAX_WIDTH = 42; 
-    const padLine = (label, value) => {
-        const valStr = String(value);
-        const labelLen = label.length;
-        const space = MAX_WIDTH - labelLen - valStr.length;
-        return `${label}${Array(space > 0 ? space : 1).join('.')}${valStr}`; 
-    };
-    const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.total).padStart(12); 
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${data.qty}`; 
-        const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
-    };
-
-    const outletDetail = Object.entries(salesByOutlet).map(([type, total]) => 
-        padLine(`- ${type}:`, formatRp(total))
+    let outletDetail = Object.entries(salesByOutlet).map(([type, total]) => 
+        padLine(` - ${type}:`, formatRp(total))
     ).join('\n');
     
-    const menuDetail = sortedMenu.map(([name, data]) => createReportLine(name, data)).join('\n');
+    // Sales by Menu Detail
+    let menuMix = {};
+    filteredTrx.forEach(t => {
+        t.items.forEach(item => {
+            const key = `${item.name} (${item.category})`;
+            menuMix[key] = menuMix[key] || { qty: 0, total: 0 };
+            menuMix[key].qty += item.qty;
+        });
+    });
+    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty); 
 
-    const w = window.open("", "_blank");
-    
-    const kasirLine = padLine("Manajer/Kasir: ", currentUser ? currentUser.email : "-");
+    let menuDetail = sortedMenu.map(([key, data]) => 
+        padLine(`${key} (${data.qty}x)`, `${formatRp(data.total)}`)
+    ).join('\n');
+
+
+    const kasirLine = padLine("Kasir/Manager: ", currentUser ? currentUser.email : "-");
     const dateLine = padLine("Tanggal Cetak: ", new Date().toLocaleString("id-ID"));
     const totalTrxLine = padLine("Total Transaksi: ", `${filteredTrx.length} Nota`);
 
@@ -1382,15 +977,27 @@ LAPORAN SELESAI
 window.onload=()=>{
   if (currentUser) {
     if(currentUser.role === 'Manager'){
-      $("userRoleDisplay").innerText = `Manajer: ${currentUser.email}`;
-    } else {
-      $("userRoleDisplay").innerText = `Kasir: ${currentUser.email}`;
+      $("userRoleDisplay").innerText = "Manager";
     }
-    activateTab('home');
+    $("userEmailDisplay").innerText = currentUser.email;
+    $("loginPage").classList.add('hidden');
+    $("appHeader").classList.remove('hidden');
+    
+    // Ensure the home button is active on load
+    document.querySelector('.navbar button').classList.add('active-tab');
+
+    // Initial setup
+    renderDiscountSelect();
+    renderMenuSelectorButtons();
+
+    // Default view
+    changePage('home'); 
   } else {
-    showLogin();
+    changePage('login');
+    $("appHeader").classList.add('hidden');
   }
 };
+// ]]>
 </script>
 </body>
 </html>
