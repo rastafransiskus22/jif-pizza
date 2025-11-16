@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>JIF PIZZA POS v10.1 — Revisi</title>
+<title>JIF PIZZA POS v10.2 — Final</title>
 <link rel="icon" href="logo.png"/>
 
 <meta name="mobile-web-app-capable" content="yes">
@@ -59,8 +59,6 @@ header p{margin:4px 0 0 0;font-size:14px}
     box-shadow: 0 4px 6px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08); 
     background: linear-gradient(145deg, #f0f0f0, #e0e0e0); 
     color: #333;
-    /* REVISI 2: Menghapus text-shadow agar tidak berbayang */
-    
     /* REVISI 2: Teks Tombol Tengah */
     display: flex;
     align-items: center; /* Pusat Vertikal */
@@ -79,19 +77,16 @@ header p{margin:4px 0 0 0;font-size:14px}
 .btn.primary, .navbar button.primary-nav { 
     background: linear-gradient(145deg, #e57373, #d32f2f);
     color: #fff;
-    /* REVISI 2: Menghapus text-shadow agar tidak berbayang */
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 .btn.secondary, .navbar button.secondary-nav { 
     background: linear-gradient(145deg, #64b5f6, #1976d2);
     color: #fff;
-    /* REVISI 2: Menghapus text-shadow agar tidak berbayang */
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 .btn.danger, .navbar button.danger-nav { 
     background: linear-gradient(145deg, #ef5350, #c62828);
     color: #fff;
-    /* REVISI 2: Menghapus text-shadow agar tidak berbayang */
     box-shadow: 0 4px 6px rgba(0,0,0,0.2), 0 1px 3px rgba(0,0,0,0.1);
 }
 /* GAYA TAB AKTIF (Merah) */
@@ -176,7 +171,6 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
     display: block;
     margin: 0 auto 20px auto; 
 }
-
 /* NEW: Gaya Kotak Ringkasan Laporan */
 .report-summary-grid {
     display: grid;
@@ -230,18 +224,18 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 }
 
 
-/* Print style untuk 80mm */
+/* Print style untuk 58mm (REVISI PERMINTAAN 5) */
 @media print {
     body { 
-        width: 80mm; 
+        width: 58mm; /* Ukuran Printer 58mm */
         margin: 0; 
         padding: 0; 
         font-family: 'Courier New', Courier, monospace !important; 
-        font-size: 14px !important;
+        font-size: 12px !important; /* Dikecilkan sedikit agar muat */
     }
     pre { 
-        width: 80mm !important; 
-        max-width: 80mm !important; 
+        width: 58mm !important; 
+        max-width: 58mm !important; 
         font-family: 'Courier New', Courier, monospace !important; 
     }
 }
@@ -280,7 +274,6 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   </p>
   <button class="btn primary" onclick="activateTab('kasir')">Mulai Kasir</button>
 </div>
-
 <div id="kasirPage" class="container hidden">
   <input type="text" id="customerNote" placeholder="Nama Pelanggan/Driver/Catatan" style="margin-bottom: 10px;"/>
   <div id="orderLabel"></div>
@@ -323,9 +316,7 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   <button class="btn primary" onclick="addMenu()">Tambah</button>
   <div id="menuEditor"></div>
 
-  <h3 style="margin-top: 30px;">Kelola Diskon (Manajer Only)</h3>
-  <p style="color: #666;">Fitur diskon global dinonaktifkan. Sekarang diskon diterapkan per item.</p>
-</div>
+  </div>
 <div id="laporanPage" class="container hidden">
   <h3>Laporan Penjualan</h3>
   
@@ -423,6 +414,9 @@ let orderType=null; // Sekarang bisa 'Offline', 'Gojek', 'Grab', 'Shopee'
 let cart=[];
 let currentFinalTotal = 0; 
 let salesChartInstance = null; 
+
+// PERMINTAAN 5: Set MAX_WIDTH untuk 58mm printer
+const MAX_WIDTH = 30; 
 
 function saveStore(){localStorage.setItem(STORE_KEY,JSON.stringify(store));}
 function formatRp(n){return "Rp "+(n||0).toLocaleString("id-ID");}
@@ -522,7 +516,7 @@ function renderAppStructure(){
   $("appNavbar").classList.remove("hidden");
   ["loginPage"].forEach(id=>$(id).classList.add("hidden"));
   
-  // Logic untuk menyembunyikan/menampilkan tombol Menu
+  // PERMINTAAN 2: Logic untuk menyembunyikan/menampilkan tombol Menu (Manajer Only)
   const menuBtn = $("nav-menu");
   if (menuBtn) {
     if (currentUser && currentUser.role === 'Manager') {
@@ -632,7 +626,7 @@ function deleteFromCart(index) {
     }
 }
 function updateItemDiscount(index, inputElement) {
-    let percent = parseFloat(inputElement.value) || 0;
+    let percent = parseFloat(inputElement.value.replace(/[^0-9.]/g, '')) || 0; // Hapus karakter non-angka kecuali titik
     
     if (percent < 0) percent = 0;
     if (percent > 100) percent = 100;
@@ -683,7 +677,8 @@ function renderOrders(){
                 <small>Harga @${formatRp(c.price)}</small>
             </div>
             <input 
-                type="number" 
+                type="text" 
+                inputmode="numeric"
                 class="item-discount-input" 
                 placeholder="%" 
                 value="${c.discountPercent}" 
@@ -799,7 +794,10 @@ function completePayment(method, paidAmount = null) {
     const customerNote = $("customerNote").value.trim() || orderType; 
     
     saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, method); 
-    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method); 
+    
+    // PERMINTAAN 6 & 7: Cetak Struk 2 kali (Customer dan Kasir)
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Customer"); 
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Kasir"); 
     
     cart=[];
     renderOrders();
@@ -831,19 +829,19 @@ function saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, paym
     });
     saveStore();
 }
-function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, paymentMethod){
+// PERMINTAAN 5, 6, 7: Revisi fungsi printStruk untuk 58mm (MAX_WIDTH 30) dan struk ganda
+function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, paymentMethod, copyType){
     const now = new Date().toLocaleString("id-ID");
-    const MAX_WIDTH = 42; 
 
     const createStrukLine = (name, qty, price, discountAmount, finalPrice) => {
-        const totalStr = formatRp(finalPrice).padStart(12);
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${qty}`;
+        const totalStr = formatRp(finalPrice).padStart(8); // Dikecilkan untuk 30
+        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${qty}`; // Disesuaikan untuk 30
         const space = MAX_WIDTH - namePart.length - totalStr.length;
         
         let line = `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalStr}`; 
         
         if (discountAmount > 0) {
-            const discountStr = `  Diskon: -${formatRp(discountAmount).padStart(12)}`;
+            const discountStr = `  Disc: -${formatRp(discountAmount).padStart(8)}`;
             line += `\n${discountStr.padStart(MAX_WIDTH)}`;
         }
         return line;
@@ -854,25 +852,62 @@ function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, p
     const w=window.open("","_blank");
     w.document.write(`
     <pre>
-🍕 JIF PIZZA CONDET
-Kasir: ${currentUser.email}
-Tanggal: ${now}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-${cart.map(i => createStrukLine(i.name, i.qty, i.price, i.discountAmount, i.finalPrice)).join('\n')}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-Subtotal:     ${formatRp(subtotal).padStart(12)}
-${totalDiscount > 0 ? `Total Diskon: -${formatRp(totalDiscount).padStart(12)}\n` : ''}${`Total Akhir:  ${formatRp(finalTotal).padStart(12)}`}
-${(paymentMethod === 'Cash' && kembali >= 0) ? `Bayar:        ${formatRp(bayar).padStart(12)}\nKembali:      ${formatRp(kembali).padStart(12)}` : ''}
-Metode Bayar: ${paymentMethod}
-Order: ${orderType}
-${noteLine}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-Terima kasih!
+ ${copyType.toUpperCase()} COPY 
+ 🍕 JIF PIZZA CONDET
+ Kasir: ${currentUser.email}
+ Tgl: ${now}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ ${cart.map(i => createStrukLine(i.name, i.qty, i.price, i.discountAmount, i.finalPrice)).join('\n')}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ Subtotal: ${formatRp(subtotal).padStart(12)}
+ ${totalDiscount > 0 ? ` Disc: -${formatRp(totalDiscount).padStart(12)}\n` : ''} Total:    ${formatRp(finalTotal).padStart(12)}
+ ${paymentMethod === 'Cash' ? ` Bayar:    ${formatRp(bayar).padStart(12)}\n Kembali:  ${formatRp(kembali).padStart(12)}` : ''}
+ Bayar: ${paymentMethod} | Order: ${orderType}
+ ${noteLine}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ ${copyType === 'Customer' ? '*** TERIMA KASIH ***' : '*** UNTUK KASIR ***'}
         </pre>
     `);
     
     w.print();
 }
+// PERMINTAAN 8: Fungsi Cetak Ulang Struk
+function reprintTransaction(transaction) {
+    if (!confirm(`Cetak ulang Transaksi ID: ${transaction.id}?`)) return;
+
+    // Set cart sementara untuk printing
+    const tempCart = transaction.items.map(item => ({
+        name: item.name,
+        price: item.price,
+        qty: item.qty,
+        category: item.category,
+        baseMenuName: item.baseMenuName,
+        discountPercent: item.discountPercent,
+        discountAmount: item.discountAmount,
+        finalPrice: item.finalPrice 
+    }));
+
+    // Simulasikan data pembayaran untuk struk
+    const isCash = transaction.paymentMethod === 'Cash';
+    const finalTotal = transaction.total;
+    // Karena data bayar dan kembali tidak disimpan, kita asumsikan Bayar = Total Akhir jika non-Cash.
+    const bayar = isCash ? (transaction.subtotal || transaction.total) : finalTotal;
+    const kembali = isCash ? (bayar - finalTotal) : 0; 
+
+    // Simpan cart lama
+    const originalCart = [...cart];
+    cart = tempCart; 
+
+    // Panggil fungsi cetak ganda
+    printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Customer (REPRINT)");
+    printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Kasir (REPRINT)");
+    
+    // Kembalikan cart ke keadaan semula
+    cart = originalCart;
+    alert("Cetak ulang selesai!");
+}
+
+
 // ======================================================================
 // FUNGSI MANAJEMEN MENU & DISKON
 // ======================================================================
@@ -917,7 +952,6 @@ function addMenu(){
     renderMenus();
     renderMenuEditor();
 }
-
 function renderMenuEditor(){
     const root=$("menuEditor");
     root.innerHTML="";
@@ -1148,7 +1182,6 @@ function renderSalesGraph(transactions, filterType, selectedDate) {
         }
     });
 }
-
 // FUNGSI RENDER RINGKASAN BARU (Card Layout)
 function renderSummary(filteredTrx, filter) {
     const root = $("laporanSummary");
@@ -1286,7 +1319,10 @@ function renderTransactionDetails(filteredTrx) {
         const noteDisplay = t.note ? t.note : t.orderType;
 
         const deleteBtn = isManager ? 
-            `<button class='btn danger' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px; background: #c62828;' onclick='deleteTransaction(${t.id})'>Hapus Transaksi</button>` : '';
+            `<button class='btn danger' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px; background: #c62828; margin-right: 10px;' onclick='deleteTransaction(${t.id})'>Hapus Transaksi</button>` : '';
+
+        // PERMINTAAN 8: Tambahkan tombol Cetak Ulang
+        const reprintBtn = `<button class='btn secondary' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px;' onclick='reprintTransaction(${JSON.stringify(t)})'>Cetak Ulang Struk</button>`;
 
         const totalDiscount = t.discountAmount || 0;
         const discountDisplay = totalDiscount > 0 ? 
@@ -1308,12 +1344,12 @@ function renderTransactionDetails(filteredTrx) {
             <div style="margin: 5px 0;">${subtotalDisplay}</div>
             ${discountDisplay} 
             <div style="font-weight: bold; color: #2e7d32;">Total Akhir: ${formatRp(t.total)}</div>
-            ${deleteBtn}
+            <div style="margin-top: 10px;">${deleteBtn}${reprintBtn}</div>
         `;
         root.appendChild(d);
     });
 }
-
+// PERMINTAAN 5: Revisi fungsi printClosing untuk 58mm (MAX_WIDTH 30)
 function printClosing(){
     const today = new Date().toLocaleDateString("id-ID");
     const trx = store.transactions.filter(t => new Date(t.date).toLocaleDateString("id-ID") === today);
@@ -1323,8 +1359,6 @@ function printClosing(){
     const totalSubtotal = trx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
     const totalDiscount = trx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
     const totalSales = trx.reduce((acc, t) => acc + t.total, 0);
-
-    const MAX_WIDTH = 42; 
 
     const padLine = (label, value) => { 
         const valueStr = String(value);
@@ -1357,8 +1391,8 @@ function printClosing(){
     }));
     
     const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.finalSales).padStart(12); 
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${data.qty}`; 
+        const totalRpStr = formatRp(data.finalSales).padStart(8); // Disesuaikan untuk 30
+        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${data.qty}`; // Disesuaikan untuk 30
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
         return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
     };
@@ -1374,28 +1408,28 @@ function printClosing(){
     const totalTrxLine = padLine("Total Transaksi: ", `${trx.length} Nota`);
 
     w.document.write(`
-        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 80mm; max-width: 80mm;'>
+        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
  === CLOSING REPORT HARIAN ===
         
  Outlet: JIF PIZZA CONDET
 ${kasirLine}
 ${dateLine}
-${'__________________________________________'.substring(0, MAX_WIDTH)} 
+${'______________________________'.substring(0, MAX_WIDTH)} 
 RINGKASAN PENJUALAN
 ${totalTrxLine}
 ${padLine("Subtotal Kotor: ", formatRp(totalSubtotal))}
 ${padLine("Diskon Total: ", formatRp(totalDiscount))}
 ${padLine("TOTAL PENJUALAN AKHIR: ", formatRp(totalSales))}
 
-${'__________________________________________'.substring(0, MAX_WIDTH)}
+${'______________________________'.substring(0, MAX_WIDTH)}
 SALES BY PAYMENT METHOD
 ${paymentDetail}
 
-${'__________________________________________'.substring(0, MAX_WIDTH)}
+${'______________________________'.substring(0, MAX_WIDTH)}
 SALES BY MENU (PRODUCT MIX)
 ${menuDetail.trim()}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-==========================================
+${'______________________________'.substring(0, MAX_WIDTH)}
+==============================
 TERIMA KASIH, LAPORAN SELESAI
         </pre>
     `);
@@ -1403,6 +1437,7 @@ TERIMA KASIH, LAPORAN SELESAI
     w.print();
 }
 
+// PERMINTAAN 5: Revisi fungsi printReport untuk 58mm (MAX_WIDTH 30)
 function printReport() {
     const dateInputTrigger = $("reportDate").value ? true : false;
     let activeFilter = 'today'; 
@@ -1464,7 +1499,6 @@ function printReport() {
 
     const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
     
-    const MAX_WIDTH = 42; 
     const padLine = (label, value) => {
         const valStr = String(value);
         const labelLen = label.length;
@@ -1472,8 +1506,8 @@ function printReport() {
         return `${label}${Array(space > 0 ? space : 1).join('.')}${valStr}`; 
     };
     const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.finalSales).padStart(12); 
-        const namePart = `${name.substring(0, MAX_WIDTH - 15)} x${data.qty}`; 
+        const totalRpStr = formatRp(data.finalSales).padStart(8); 
+        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${data.qty}`; 
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
         return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
     };
@@ -1491,7 +1525,7 @@ function printReport() {
     const totalTrxLine = padLine("Total Transaksi: ", `${filteredTrx.length} Nota`);
 
     w.document.write(`
-        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 80mm; max-width: 80mm;'>
+        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
         
  === LAPORAN PENJUALAN PERIODE ===
         
@@ -1500,29 +1534,28 @@ function printReport() {
 ${kasirLine}
 ${dateLine}
         
-${'__________________________________________'.substring(0, MAX_WIDTH)} 
+${'______________________________'.substring(0, MAX_WIDTH)} 
 RINGKASAN PENJUALAN
 ${totalTrxLine}
 ${padLine("Subtotal Kotor: ", formatRp(totalSubtotal))}
 ${padLine("Diskon Total: ", formatRp(totalDiscount))}
 ${padLine("TOTAL PENJUALAN AKHIR: ", formatRp(totalSales))}
 
-${'__________________________________________'.substring(0, MAX_WIDTH)}
+${'______________________________'.substring(0, MAX_WIDTH)}
 SALES BY OUTLET
 ${outletDetail}
 
-${'__________________________________________'.substring(0, MAX_WIDTH)}
+${'______________________________'.substring(0, MAX_WIDTH)}
 SALES BY MENU (PRODUCT MIX)
 ${menuDetail.trim()}
-${'__________________________________________'.substring(0, MAX_WIDTH)}
-==========================================
+${'______________________________'.substring(0, MAX_WIDTH)}
+==============================
 LAPORAN SELESAI
         </pre>
     `);
     
     w.print();
 }
-
 window.onload=()=>{
   if (currentUser) {
     if(currentUser.role === 'Manager'){
