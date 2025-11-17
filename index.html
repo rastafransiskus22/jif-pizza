@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>JIF PIZZA POS v10.2 — Final</title>
+<title>JIF PIZZA POS v10.3 — Final Rev</title>
 <link rel="icon" href="logo.png"/>
 
 <meta name="mobile-web-app-capable" content="yes">
@@ -19,6 +19,16 @@ body{font-family:Segoe UI,Arial,sans-serif;margin:0;background:#fff;color:#222}
 .hidden{display:none}
 header.hidden, .navbar.hidden { display: none !important; }
 
+/* REVISI 1: Aturan responsif umum */
+.container { 
+    padding: 14px; 
+    max-width: 100%; /* Pastikan tidak melebihi lebar layar */
+    box-sizing: border-box; /* Padding dihitung di dalam lebar */
+}
+input, select { 
+    box-sizing: border-box; /* Input dan select juga dihitung di dalam lebar */
+}
+/* END REVISI 1 */
 /* LATAR BELAKANG GAMBAR HEADER (pizza.jpg) */
 header{
   background:url('pizza.jpg') center/cover no-repeat; 
@@ -96,7 +106,7 @@ header p{margin:4px 0 0 0;font-size:14px}
     box-shadow: 0 0 5px rgba(217, 73, 73, 0.7); 
     transform: none; 
 }
-.navbar{background:#fff;display:flex;justify-content:center;gap:8px;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1)}
+.navbar{background:#fff;display:flex;justify-content:center;gap:8px;padding:8px;box-shadow:0 2px 6px rgba(0,0,0,0.1); overflow-x: auto;} /* REVISI 1: Tambah overflow-x: auto */
 .container{padding:14px}
 #loginPage {
     max-width: 400px; 
@@ -106,12 +116,17 @@ header p{margin:4px 0 0 0;font-size:14px}
     border-radius: 10px;
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+/* REVISI 1: Menu Grid lebih fleksibel di HP */
+.menu-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:10px}
 .menu-item{border:1px solid #ccc;border-radius:8px;padding:8px;text-align:center;cursor:pointer}
 .menu-item {
     background: #fdfdfd;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
     transition: transform 0.1s ease-in-out;
+    /* REVISI 1: Pastikan konten tidak terpotong */
+    word-wrap: break-word; 
+    overflow: hidden;
+    font-size: 0.9em;
 }
 .menu-item:hover {
     transform: translateY(-2px);
@@ -124,21 +139,27 @@ header p{margin:4px 0 0 0;font-size:14px}
     align-items: center;
     padding: 5px 0;
     border-bottom: 1px dashed #eee;
-    flex-wrap: wrap; 
+    flex-wrap: nowrap; /* REVISI 1: Jangan wrap agar rapi di HP */
+    overflow-x: auto; /* Tambahkan scroll jika konten terlalu lebar */
+}
+.order-item-detail > div {
+    flex-shrink: 0; /* Pastikan elemen div tidak menyusut paksa */
 }
 .order-item-detail .delete-btn {
     padding: 3px 6px;
     font-size: 0.7em;
     margin-left: 10px;
     box-shadow: none;
+    flex-shrink: 0;
 }
 /* Gaya untuk input diskon per item (REVISI 1: Lebihkan sedikit untuk Rupiah) */
 .item-discount-input {
-    width: 70px; /* Ukuran kecil */
+    width: 60px; /* Diperkecil lagi */
     padding: 3px;
-    font-size: 0.9em;
+    font-size: 0.8em; /* Diperkecil */
     text-align: right;
     margin: 0 5px;
+    flex-shrink: 0;
 }
 .order-box{margin-top:12px;padding:10px;border-top:2px solid #ccc}
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
@@ -147,7 +168,7 @@ header p{margin:4px 0 0 0;font-size:14px}
   padding:20px;
   border-radius:10px;
   text-align:center;
-  max-width:320px;
+  max-width:90%; /* REVISI 1: Maksimal 90% lebar layar */
   width:90%;
   display: flex; 
   flex-direction: column; 
@@ -160,9 +181,27 @@ header p{margin:4px 0 0 0;font-size:14px}
     gap: 8px; 
 }
 input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;margin:4px 0}
-.report-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-.report-table th, .report-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+/* REVISI 1: Table Responsif */
+.report-table { 
+    width: 100%; 
+    border-collapse: collapse; 
+    margin-top: 15px; 
+    font-size: 0.8em; /* Dikecilkan */
+}
+.report-table th, .report-table td { 
+    border: 1px solid #ddd; 
+    padding: 5px; /* Dikecilkan */
+    text-align: left; 
+    word-wrap: break-word;
+}
 .report-table th { background-color: #f2f2f2; }
+/* REVISI 1: Div untuk membuat tabel bisa digulir secara horizontal */
+.table-container { 
+    overflow-x: auto; 
+    width: 100%; 
+    box-sizing: border-box;
+}
+/* END REVISI 1 */
 #homePage img {
     max-width: 100%;
     height: auto;
@@ -174,13 +213,13 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 /* NEW: Gaya Kotak Ringkasan Laporan */
 .report-summary-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); /* REVISI 1: Dikecilkan lagi */
     gap: 10px;
     margin-top: 15px;
 }
 .summary-card {
     background: #fff;
-    padding: 15px;
+    padding: 10px; /* Dikecilkan */
     border-radius: 8px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
     border-left: 5px solid; /* Akan diubah sesuai tipe */
@@ -188,13 +227,13 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 }
 .summary-card h4 {
     margin: 0 0 5px 0;
-    font-size: 0.8em;
+    font-size: 0.7em; /* Dikecilkan */
     color: #666;
     text-transform: uppercase;
     line-height: 1.2;
 }
 .summary-card .value {
-    font-size: 1.2em;
+    font-size: 1.1em; /* Dikecilkan */
     font-weight: 700;
 }
 /* Warna spesifik untuk border card */
@@ -211,6 +250,7 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
     background: #f9f9f9;
     padding: 10px;
     border-radius: 6px;
+    font-size: 0.9em; /* Dikecilkan */
 }
 .detail-list li {
     padding: 5px 0;
@@ -222,9 +262,13 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 .detail-list li:last-child {
     border-bottom: none;
 }
+/* REVISI 1: Tata Letak Detail Summary di Laporan */
+#laporanDetailSummary > div {
+    flex-direction: column; /* Ubah menjadi kolom di layar kecil */
+    gap: 10px !important;
+}
 
-
-/* Print style untuk 58mm (REVISI 2: Sudah ada) */
+/* Print style untuk 58mm */
 @media print {
     body { 
         width: 58mm; /* Ukuran Printer 58mm */
@@ -276,7 +320,7 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 <div id="kasirPage" class="container hidden">
   <input type="text" id="customerNote" placeholder="Nama Pelanggan/Driver/Catatan" style="margin-bottom: 10px;"/>
   <div id="orderLabel"></div>
-  <div class="navbar" style="margin-top: 10px; box-shadow: none; border: 1px solid #eee;">
+  <div class="navbar" style="margin-top: 10px; box-shadow: none; border: 1px solid #eee; overflow-x: auto; justify-content: flex-start;">
     <button class="secondary-nav" onclick="renderMenus('Semua')">Semua</button>
     <button class="secondary-nav" onclick="renderMenus('Large')">Large</button>
     <button class="secondary-nav" onclick="renderMenus('Reguler')">Reguler</button>
@@ -313,9 +357,10 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   <input id="mShopeeMarkup" type="number" placeholder="Markup Harga SHOPEEPAY (Rp)"/>
   
   <button class="btn primary" onclick="addMenu()">Tambah</button>
-  <div id="menuEditor"></div>
-
+  <div class="table-container">
+    <div id="menuEditor"></div>
   </div>
+</div>
 <div id="laporanPage" class="container hidden">
   <h3>Laporan Penjualan</h3>
   
@@ -347,7 +392,9 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   <div id="salesByMenu"></div>
 
   <h4 style="margin-top: 20px;">Detail Transaksi</h4>
-  <div id="laporanList"></div>
+  <div class="table-container">
+    <div id="laporanList"></div>
+  </div>
 </div>
 <div class="overlay" id="orderTypeOverlay">
   <div class="modal">
@@ -404,32 +451,49 @@ if ('serviceWorker' in navigator) {
 // FUNGSI INTI & UTILITY
 // ======================================================================
 
-const STORE_KEY="jif_pos_v10_1"; 
-let store=JSON.parse(localStorage.getItem(STORE_KEY)||'{"users":[{"email":"manager@jif.com","password":"123","role":"Manager"}],"menus":[],"transactions":[]}'); 
+const STORE_KEY="jif_pos_v10_3"; // Update versi store key
+let store=JSON.parse(localStorage.getItem(STORE_KEY)||'{"users":[{"email":"manager@jif.com","password":"123","role":"Manager"}],"menus":[],"transactions":[],"dailyCounter":{}}'); // REVISI 4: Tambah dailyCounter
 let currentUser=JSON.parse(localStorage.getItem('currentUser')) || null; 
 
-let orderType=null; // Sekarang bisa 'Offline', 'Gojek', 'Grab', 'Shopee'
+let orderType=null; 
 let cart=[];
 let currentFinalTotal = 0; 
 let salesChartInstance = null; 
 
-// REVISI 2: Set MAX_WIDTH untuk 58mm printer (Sudah sesuai permintaan)
 const MAX_WIDTH = 30; 
 
-function saveStore(){localStorage.setItem(STORE_KEY,JSON.stringify(store));}
+function saveStore(){
+    localStorage.setItem(STORE_KEY,JSON.stringify(store));
+}
 function formatRp(n){return "Rp "+(n||0).toLocaleString("id-ID");}
 function $(id){return document.getElementById(id);}
 function getDateOnly(dateString) {
     const d = new Date(dateString);
     return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
 }
-function getWeekNumber(d) {
-    d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay()||7));
-    var yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    var weekNo = Math.ceil(( ( (d - yearStart) / 86400000) + 1)/7);
-    return d.getUTCFullYear() + '-' + weekNo;
+function getTodayDateKey() {
+    const d = new Date();
+    return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
+// REVISI 4: Fungsi untuk mendapatkan nomor antrian harian
+function getDailyQueueNumber() {
+    const todayKey = getTodayDateKey();
+    
+    // 1. Cek apakah ada counter untuk hari ini
+    if (store.dailyCounter && store.dailyCounter.date === todayKey) {
+        // Jika ada, increment dan simpan
+        store.dailyCounter.count++;
+    } else {
+        // Jika tidak ada (hari baru), reset counter dan mulai dari 100
+        store.dailyCounter = {
+            date: todayKey,
+            count: 100 // Dimulai dari 100
+        };
+    }
+    saveStore();
+    return store.dailyCounter.count;
+}
+
 
 // REVISI 3: Fungsi menghitung harga berdasarkan platform/orderType
 function calculatePrice(menu) {
@@ -472,7 +536,6 @@ function login(){
   }
   activateTab('home');
 }
-
 function register(){
   const email=$("email").value.trim(),pass=$("password").value.trim();
   if(!email||!pass)return alert("Isi email & password");
@@ -583,7 +646,7 @@ function renderMenus(filter = 'Semua'){
         if (price > 0) {
             const div=document.createElement("div");div.className="menu-item";
             
-            const itemName = `${m.name} (${m.category})`;
+            const itemName = `${m.baseMenuName} (${m.category})`; // Menggunakan baseMenuName untuk tampilan lebih ringkas
             
             div.innerHTML=`
                 <div><strong>${itemName}</strong></div>
@@ -595,6 +658,7 @@ function renderMenus(filter = 'Semua'){
         }
     });
 }
+
 function addToCart(m, itemName, price){
     const f=cart.find(i=>i.name===itemName);
     if(f){
@@ -613,7 +677,6 @@ function addToCart(m, itemName, price){
     }
     renderOrders();
 }
-
 function deleteFromCart(index) {
     if (confirm(`Yakin ingin menghapus item ${cart[index].name}?`)) {
         cart.splice(index, 1);
@@ -718,12 +781,11 @@ function renderOrders(){
                 placeholder="Rp" 
                 value="${c.discountAmount}" 
                 oninput="updateItemDiscount(${index}, this)"
-                style="width: 70px;"
             >
             <div style="font-weight: bold; text-align: right;">
                 <span class="final-price-display">${formatRp(c.finalPrice)}</span>
                 <br>
-                <small class="item-discount-display" style="color: #c62828;">Diskon: ${formatRp(c.discountAmount)}</small>
+                <small class="item-discount-display" style="color: #c62828;">Disc: ${formatRp(c.discountAmount)}</small>
             </div>
             <button class='btn danger delete-btn' onclick='deleteFromCart(${index})'>Hapus</button>
         `;
@@ -839,24 +901,27 @@ function completePayment(method, bayarManual = 0){
     }
     
     const customerNote = $("customerNote").value.trim() || orderType;
-    saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, method);
+    const queueNumber = getDailyQueueNumber(); // REVISI 4: Ambil nomor antrian
+    
+    saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, method, queueNumber);
     
     // PERMINTAAN 6 & 7: Cetak Struk 2 kali (Customer dan Kasir)
-    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Customer");
-    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Kasir");
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, queueNumber, "Customer");
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, queueNumber, "Kasir");
     
     cart=[];
     renderOrders();
     $("customerNote").value = "";
     openOrderType();
 }
-
-function saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, paymentMethod){
+// REVISI 4: Tambahkan queueNumber ke data transaksi
+function saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, paymentMethod, queueNumber){
     store.transactions.push({
         id:Date.now(),
         user:currentUser.email,
         orderType,
         paymentMethod,
+        queueNumber, // REVISI 4: Simpan queueNumber
         items: cart.map(item => ({ 
             name: item.name, 
             price: item.price, 
@@ -872,7 +937,7 @@ function saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, paym
         discountAmount: totalDiscount,
         total: finalTotal,
         date:new Date().toISOString(),
-        note: customerNote
+        note: customerNote // REVISI 4: Simpan customerNote
     });
     saveStore();
 }
@@ -886,8 +951,8 @@ const getAbbr = (cat) => {
     return '';
 }
 
-// PERMINTAAN 5, 6, 7: Revisi fungsi printStruk untuk 58mm (MAX_WIDTH 30) dan struk ganda
-function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, paymentMethod, copyType){
+// REVISI 4: Tambahkan queueNumber ke parameter
+function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, paymentMethod, queueNumber, copyType){
     const now = new Date().toLocaleString("id-ID");
     
     // REVISI 4: Memodifikasi createStrukLine untuk menyingkat kategori
@@ -915,7 +980,6 @@ function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, p
         }
         return line;
     }
-    
     const itemDetails = cart.map(i => createStrukLine(i)).join('\n');
     
     const kasirLine = padLine("Kasir: ", currentUser ? currentUser.email : "-");
@@ -927,10 +991,14 @@ function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, p
     const kembaliLine = (paymentMethod === 'Cash' && kembali > 0) ? padLine("Kembali: ", formatRp(kembali)) : '';
     const discountLine = totalDiscount > 0 ? padLine("Diskon Total: ", formatRp(totalDiscount)) : '';
     
+    // REVISI 4: Tambahkan nomor antrian
+    const antrianLine = padLine("No. Antrian: ", `#${queueNumber}`);
+
     const w=window.open("","_blank");
     w.document.write(`
         <pre style='font-family:monospace; font-size: 10px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
  === JIF PIZZA CONDET ===
+ ${antrianLine}
  ${kasirLine}
  ${dateLine}
  ${noteLine}
@@ -954,19 +1022,20 @@ function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, p
     w.print();
 }
 
-function reprintTransaction(transaction){
-    // ... (kode reprintTransaction)
+// REVISI 2: Perbaiki masalah escaping dengan JSON.stringify lalu parse ulang
+function reprintTransaction(transactionStr){
+    // Parsing string JSON kembali menjadi objek
+    const transaction = JSON.parse(transactionStr);
+    
     const tempCart = transaction.items.map(item => ({ 
         name: item.name, 
         price: item.price, 
         qty: item.qty, 
         category: item.category,
         baseMenuName: item.baseMenuName,
-        // REVISI 1: Hapus discountPercent jika tidak digunakan
         discountAmount: item.discountAmount || 0, 
         finalPrice: item.finalPrice 
     }));
-    // Simulasikan data pembayaran untuk struk
     const isCash = transaction.paymentMethod === 'Cash';
     const finalTotal = transaction.total;
     // Karena data bayar dan kembali tidak disimpan, kita asumsikan Bayar = Total Akhir jika non-Cash.
@@ -977,9 +1046,29 @@ function reprintTransaction(transaction){
     const originalCart = [...cart];
     cart = tempCart; 
     
-    // Panggil fungsi cetak ganda
-    printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Customer (REPRINT)");
-    printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Kasir (REPRINT)");
+    // Panggil fungsi cetak ganda. Ambil note dan queueNumber dari transaksi.
+    printStruk(
+        transaction.subtotal || finalTotal, 
+        transaction.discountAmount || 0, 
+        finalTotal, 
+        bayar, 
+        kembali, 
+        transaction.note || transaction.orderType, 
+        transaction.paymentMethod, 
+        transaction.queueNumber || 0, // REVISI 4: Ambil queueNumber dari transaksi
+        "Customer (REPRINT)"
+    );
+    printStruk(
+        transaction.subtotal || finalTotal, 
+        transaction.discountAmount || 0, 
+        finalTotal, 
+        bayar, 
+        kembali, 
+        transaction.note || transaction.orderType, 
+        transaction.paymentMethod, 
+        transaction.queueNumber || 0, // REVISI 4: Ambil queueNumber dari transaksi
+        "Kasir (REPRINT)"
+    );
     
     // Kembalikan cart ke keadaan semula
     cart = originalCart;
@@ -1033,7 +1122,6 @@ function addMenu(){
     $("mGrabMarkup").value = "";
     $("mShopeeMarkup").value = "";
 }
-
 function deleteMenu(uniqueName){
     if (currentUser.role !== 'Manager') return alert("Akses ditolak.");
     if (confirm(`Yakin ingin menghapus menu ${uniqueName}?`)) {
@@ -1191,7 +1279,6 @@ function showReport(filterType = 'today', dateInputTrigger = false){
     renderLaporanList(filteredTrx);
     renderSalesChart(filteredTrx, filterType);
 }
-
 function renderSalesChart(filteredTrx, filterType = 'today') {
     if (salesChartInstance) salesChartInstance.destroy();
 
@@ -1292,11 +1379,10 @@ function renderLaporanList(filteredTrx) {
     table.innerHTML=`
         <thead>
             <tr>
-                <th>ID</th>
+                <th>ID/Antrian</th>
                 <th>Waktu</th>
-                <th>Order Type</th>
+                <th>Catatan</th> 
                 <th>Total Akhir</th>
-                <th>Kasir</th>
                 <th>Aksi</th>
             </tr>
         </thead>
@@ -1310,14 +1396,17 @@ function renderLaporanList(filteredTrx) {
         const dateStr = new Date(t.date).toLocaleString("id-ID", { 
             day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
         }).replace('.', ':');
+        // REVISI 4: Tampilkan ID dan Nomor Antrian
+        const antrianDisplay = t.queueNumber ? `#${t.queueNumber}` : 'N/A';
+        const idDisplay = t.id.toString().slice(-4);
+        
         row.innerHTML=`
-            <td>${t.id.toString().slice(-4)}</td>
+            <td>${idDisplay} / ${antrianDisplay}</td>
             <td>${dateStr}</td>
-            <td>${t.orderType} (${t.paymentMethod})</td>
+            <td>${t.note || t.orderType}</td> 
             <td>${formatRp(t.total)}</td>
-            <td>${t.user.split('@')[0]}</td>
             <td>
-                <button class='btn secondary' style="font-size: 0.8em; padding: 5px;" onclick="reprintTransaction(${JSON.stringify(t).replace(/'/g, "\\'")})">Cetak Ulang</button>
+                <button class='btn secondary' style="font-size: 0.8em; padding: 5px;" onclick="reprintTransaction('${JSON.stringify(t).replace(/'/g, "\\'")}')">Cetak Ulang</button>
                 ${currentUser && currentUser.role === 'Manager' ? `<button class='btn danger' style="font-size: 0.8em; padding: 5px; margin-left: 5px;" onclick="deleteTransaction(${t.id})">Hapus</button>` : ''}
             </td>
         `;
@@ -1357,7 +1446,7 @@ function printClosing(){
     const sortedPayment = Object.entries(salesByPayment).sort(([, a], [, b]) => b - a);
     const paymentDetail = sortedPayment.map(([method, total]) => padLine(method, formatRp(total))).join('\n');
     
-    // REVISI 4: Fungsi untuk mendapatkan singkatan kategori
+    // REVISI 4: Fungsi untuk mendapatkan singkatan kategori (diambil dari printStruk)
     const getAbbr = (cat) => {
         if (cat === 'Large') return 'L';
         if (cat === 'Reguler') return 'R';
@@ -1417,7 +1506,6 @@ function printClosing(){
     `);
     w.print();
 }
-
 // PERMINTAAN 5: Revisi fungsi printReport untuk 58mm (MAX_WIDTH 30)
 function printReport() {
     const dateInputTrigger = $("reportDate").value ? true : false;
@@ -1538,7 +1626,6 @@ LAPORAN SELESAI
     
     w.print();
 }
-
 const padLine = (label, value) => {
     const valStr = String(value);
     const labelLen = label.length;
