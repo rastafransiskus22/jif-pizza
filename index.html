@@ -132,9 +132,9 @@ header p{margin:4px 0 0 0;font-size:14px}
     margin-left: 10px;
     box-shadow: none;
 }
-/* Gaya untuk input diskon per item */
+/* Gaya untuk input diskon per item (REVISI 1: Lebihkan sedikit untuk Rupiah) */
 .item-discount-input {
-    width: 60px; /* Ukuran kecil */
+    width: 70px; /* Ukuran kecil */
     padding: 3px;
     font-size: 0.9em;
     text-align: right;
@@ -224,7 +224,7 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 }
 
 
-/* Print style untuk 58mm (REVISI PERMINTAAN 5) */
+/* Print style untuk 58mm (REVISI 2: Sudah ada) */
 @media print {
     body { 
         width: 58mm; /* Ukuran Printer 58mm */
@@ -253,7 +253,6 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   <button id="nav-laporan" class="secondary-nav" onclick="activateTab('laporan');showReport('today')">Laporan</button>
   <button id="nav-logout" class="secondary-nav" onclick="logout()">Logout</button>
 </div>
-
 <div id="loginPage" class="container">
   <h2>Login</h2>
   <input type="email" id="email" placeholder="Email"/>
@@ -380,7 +379,7 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
 <div class="overlay" id="qrisModal">
   <div class="modal">
     <h3>Scan QRIS Anda</h3>
-    <img src="IMG-20251115-WA0000.jpg" alt="QRIS Payment" style="max-width: 80%; height: auto; margin: 10px auto; display: block;">
+    <img src="1000208468.jpg" alt="QRIS Payment Baru" style="max-width: 80%; height: auto; margin: 10px auto; display: block;">
     <p>Pastikan pembayaran telah sukses!</p>
     <button class="btn primary" onclick="confirmQrisPayment()">Konfirmasi Pembayaran QRIS</button>
     <button class="btn danger" onclick="$('qrisModal').style.display='none'">Batal</button>
@@ -414,7 +413,7 @@ let cart=[];
 let currentFinalTotal = 0; 
 let salesChartInstance = null; 
 
-// PERMINTAAN 5: Set MAX_WIDTH untuk 58mm printer
+// REVISI 2: Set MAX_WIDTH untuk 58mm printer (Sudah sesuai permintaan)
 const MAX_WIDTH = 30; 
 
 function saveStore(){localStorage.setItem(STORE_KEY,JSON.stringify(store));}
@@ -509,7 +508,6 @@ function setActiveTab(tabName) {
         targetButton.classList.remove('secondary-nav'); 
     }
 }
-
 function renderAppStructure(){
   $("appHeader").classList.remove("hidden");
   $("appNavbar").classList.remove("hidden");
@@ -608,8 +606,8 @@ function addToCart(m, itemName, price){
             qty: 1, 
             category: m.category,
             baseMenuName: m.baseMenuName,
-            discountPercent: 0,
-            discountAmount: 0,
+            // REVISI 1: Hapus discountPercent, simpan discountAmount (Rp)
+            discountAmount: 0, 
             finalPrice: price // Harga setelah diskon
         }); 
     }
@@ -638,22 +636,22 @@ function updateFooterTotals() {
 
 /**
  * START OF FIX: Modifikasi updateItemDiscount()
- * Hapus renderOrders() dan ganti dengan update lokal + updateFooterTotals()
+ * REVISI 1: Mengubah logika dari Persentase menjadi Rupiah
  */
 function updateItemDiscount(index, inputElement) {
-    let percent = parseFloat(inputElement.value.replace(/[^0-9.]/g, '')) || 0; // Hapus karakter non-angka kecuali titik
-    
-    if (percent < 0) percent = 0;
-    if (percent > 100) percent = 100;
-    
-    inputElement.value = percent; 
+    let amount = parseFloat(inputElement.value) || 0; // Ambil nilai Rupiah
     
     const item = cart[index];
     const itemSubtotal = item.price * item.qty;
 
+    if (amount < 0) amount = 0;
+    // REVISI 1: Diskon tidak boleh melebihi subtotal
+    if (amount > itemSubtotal) amount = itemSubtotal;
+    
+    inputElement.value = amount; // Tampilkan nilai yang telah dibatasi/dibersihkan
+    
     // 1. Perbarui data item
-    item.discountPercent = percent;
-    item.discountAmount = itemSubtotal * (percent / 100);
+    item.discountAmount = amount;
     item.finalPrice = itemSubtotal - item.discountAmount;
     
     // 2. Perbarui hanya tampilan item secara lokal (di dalam baris pesanan)
@@ -677,23 +675,18 @@ function updateItemDiscount(index, inputElement) {
     
     // 3. Panggil fungsi baru untuk update total di footer (TANPA merender ulang seluruh daftar)
     updateFooterTotals();
-    
-    // HAPUS: renderOrders(); // **INI PENYEBAB KEYBOARD TERTUTUP**
 }
 /**
  * END OF FIX: updateItemDiscount()
  */
 /**
  * START OF FIX: Modifikasi renderOrders()
- * Hapus perhitungan dan pembaruan display total, ganti dengan panggilan updateFooterTotals()
- * Tambahkan class untuk update lokal di updateItemDiscount()
  */
 function renderOrders(){
     const root=$("orderList");
     root.innerHTML="";
     
     let subtotal=0;
-    // Hapus totalDiscount dan finalTotal dari scope lokal
     
     if(cart.length===0){
         root.innerHTML="<p>Belum ada pesanan</p>";
@@ -706,10 +699,10 @@ function renderOrders(){
         const itemSubtotal = c.price * c.qty;
         subtotal += itemSubtotal;
         
-        c.discountAmount = itemSubtotal * (c.discountPercent / 100);
+        // REVISI 1: Pastikan diskon tidak melebihi subtotal item
+        c.discountAmount = Math.min(c.discountAmount, itemSubtotal); 
         c.finalPrice = itemSubtotal - c.discountAmount;
         
-        // Hapus penambahan ke totalDiscount dan finalTotal di sini
         
         const d=document.createElement("div");
         d.className="order-item-detail"; 
@@ -720,15 +713,12 @@ function renderOrders(){
                 <small>Harga @${formatRp(c.price)}</small>
             </div>
             <input 
-                type="text" 
-                inputmode="numeric"
+                type="number" 
                 class="item-discount-input" 
-                placeholder="%" 
-                value="${c.discountPercent}" 
-                min="0" 
-                max="100"
+                placeholder="Rp" 
+                value="${c.discountAmount}" 
                 oninput="updateItemDiscount(${index}, this)"
-                style="width: 50px;"
+                style="width: 70px;"
             >
             <div style="font-weight: bold; text-align: right;">
                 <span class="final-price-display">${formatRp(c.finalPrice)}</span>
@@ -762,19 +752,17 @@ function openPaymentModal() {
     const manualPayButton = document.querySelector('#paymentModal .modal > button.primary');
     manualPayButton.style.display = isOffline ? 'block' : 'none';
     $("manualBayar").style.display = isOffline ? 'block' : 'none';
-    
     // Sembunyikan semua tombol payment
-    $("pay-cash-pas").style.display = 'none'; 
-    $("pay-qris").style.display = 'none'; 
-    $("pay-gojek").style.display = 'none'; 
-    $("pay-grab").style.display = 'none'; 
-    $("pay-shopee").style.display = 'none'; 
-    
+    $("pay-cash-pas").style.display = 'none';
+    $("pay-qris").style.display = 'none';
+    $("pay-gojek").style.display = 'none';
+    $("pay-grab").style.display = 'none';
+    $("pay-shopee").style.display = 'none';
+
     // Tampilkan tombol yang relevan
-    if (isOffline) {
-        $("pay-cash-pas").style.display = 'block'; 
-        $("pay-cash-pas").innerText = 'Bayar Pas (Tunai)';
-        $("pay-qris").style.display = 'block'; 
+    if (orderType === 'Offline') {
+        $("pay-cash-pas").style.display = 'block';
+        $("pay-qris").style.display = 'block';
     } else if (orderType === 'Gojek') {
         $("pay-gojek").style.display = 'block';
     } else if (orderType === 'Grab') {
@@ -782,51 +770,66 @@ function openPaymentModal() {
     } else if (orderType === 'Shopee') {
         $("pay-shopee").style.display = 'block';
     }
-
-    $("paymentModal").style.display = "flex";
-}
-
-function openQrisModal() {
-    $("paymentModal").style.display = "none";
-    $("qrisModal").style.display = "flex";
-}
-
-function confirmQrisPayment() {
-    completePayment('QRIS', currentFinalTotal);
-}
-
-function processManualPayment() {
-    const bayar = Number($("manualBayar").value);
-    if (bayar < currentFinalTotal) return alert("Nominal bayar kurang dari total akhir.");
     
-    completePayment('Cash', bayar); 
+    $("paymentModal").style.display="flex";
 }
-function completePayment(method, paidAmount = null) {
-    const subtotal = cart.reduce((a,b)=>a+b.price*b.qty,0);
-    const totalDiscount = cart.reduce((a,b)=>a+b.discountAmount,0); 
-    const finalTotal = currentFinalTotal; 
+function processManualPayment(){
+    const bayar=Number($("manualBayar").value);
+    if(bayar<currentFinalTotal)return alert("Uang bayar kurang!");
+    completePayment('Cash', bayar);
+}
+
+function openQrisModal(){
+    $("paymentModal").style.display="none";
+    $("qrisModal").style.display="flex";
+}
+
+function confirmQrisPayment(){
+    if(confirm("Apakah Anda yakin pembayaran QRIS sudah berhasil?")) {
+        completePayment('QRIS', currentFinalTotal);
+    }
+}
+function completePayment(method, bayarManual = 0){
+    if(cart.length === 0) return alert("Keranjang kosong.");
     
-    let bayar = paidAmount;
+    let subtotal=0;
+    let totalDiscount=0;
+    let finalTotal=0;
+    
+    cart.forEach(c => {
+        const itemSubtotal = c.price * c.qty;
+        subtotal += itemSubtotal;
+        totalDiscount += c.discountAmount;
+        finalTotal += c.finalPrice;
+    });
+
+    let bayar = 0;
     let change = 0;
-
-    if (method === 'Cash' || method === 'QRIS' || method === 'Gojek' || method === 'Grab' || method === 'Shopee') {
-        if (bayar === null) {
-            bayar = finalTotal;
+    
+    if (method === 'Cash') {
+        bayar = bayarManual;
+        change = bayarManual - finalTotal;
+        if (bayarManual === 0) {
+            alert("Harap masukkan nominal bayar tunai. Gunakan input manual.");
+            return; // Batalkan pembayaran jika bayar manual 0
         }
-        
-        if (method === 'Cash') {
-            change = bayar - finalTotal; 
-            if (change < 0) return alert("Nominal bayar (Cash) kurang dari total akhir. Gunakan input manual.");
-        } else {
-            bayar = finalTotal;
-            change = 0;
+    } else if (method === 'QRIS') {
+        bayar = finalTotal; 
+        change = 0;
+        if ($("qrisModal").style.display === 'flex') {
+            // Tutup modal QRIS jika dipanggil dari konfirmasi
+            $("qrisModal").style.display="none";
         }
+    } else { 
+        // Online Payment (Gojek, Grab, Shopee)
+        bayar = finalTotal;
+        change = 0; 
     }
     
     // TUTUP SEMUA MODAL
     $("paymentModal").style.display="none";
     $("qrisModal").style.display="none";
-
+    
     if (method === 'Cash' && change > 0) {
         alert("Pembayaran Tunai sukses.\nKembalian: "+formatRp(change));
     } else if (method !== 'Cash') {
@@ -835,17 +838,16 @@ function completePayment(method, paidAmount = null) {
         alert("Pembayaran Tunai Pas sukses!");
     }
     
-    const customerNote = $("customerNote").value.trim() || orderType; 
-    
-    saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, method); 
+    const customerNote = $("customerNote").value.trim() || orderType;
+    saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, method);
     
     // PERMINTAAN 6 & 7: Cetak Struk 2 kali (Customer dan Kasir)
-    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Customer"); 
-    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Kasir"); 
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Customer");
+    printStruk(subtotal, totalDiscount, finalTotal, bayar, change, customerNote, method, "Kasir");
     
     cart=[];
     renderOrders();
-    $("customerNote").value = ""; 
+    $("customerNote").value = "";
     openOrderType();
 }
 
@@ -854,98 +856,127 @@ function saveTransaction(subtotal, totalDiscount, finalTotal, customerNote, paym
         id:Date.now(),
         user:currentUser.email,
         orderType,
-        paymentMethod, 
-        items: cart.map(item => ({
-            name: item.name,
-            price: item.price,
-            qty: item.qty,
+        paymentMethod,
+        items: cart.map(item => ({ 
+            name: item.name, 
+            price: item.price, 
+            qty: item.qty, 
             category: item.category,
             baseMenuName: item.baseMenuName,
-            discountPercent: item.discountPercent, 
-            discountAmount: item.discountAmount,
+            // REVISI 1: Hapus discountPercent jika tidak digunakan
+            discountAmount: item.discountAmount, 
             finalPrice: item.finalPrice 
         })),
-        subtotal: subtotal, 
-        discount: null, 
-        discountAmount: totalDiscount, 
-        total: finalTotal, 
+        subtotal: subtotal,
+        discount: null,
+        discountAmount: totalDiscount,
+        total: finalTotal,
         date:new Date().toISOString(),
-        note: customerNote 
+        note: customerNote
     });
     saveStore();
 }
+
+// REVISI 4: Fungsi untuk mendapatkan singkatan kategori
+const getAbbr = (cat) => {
+    if (cat === 'Large') return 'L';
+    if (cat === 'Reguler') return 'R';
+    if (cat === 'Separuh') return 'S';
+    if (cat === 'Extra') return 'EX';
+    return '';
+}
+
 // PERMINTAAN 5, 6, 7: Revisi fungsi printStruk untuk 58mm (MAX_WIDTH 30) dan struk ganda
 function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, paymentMethod, copyType){
     const now = new Date().toLocaleString("id-ID");
+    
+    // REVISI 4: Memodifikasi createStrukLine untuk menyingkat kategori
+    const createStrukLine = (item) => {
+        const totalStr = formatRp(item.finalPrice).padStart(8); // Dikecilkan untuk 30
 
-    const createStrukLine = (name, qty, price, discountAmount, finalPrice) => {
-        const totalStr = formatRp(finalPrice).padStart(8); // Dikecilkan untuk 30
-        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${qty}`; // Disesuaikan untuk 30
+        let printName = item.name; 
+        const abbr = getAbbr(item.category);
+        if (abbr) {
+            // Ganti kategori lengkap dengan singkatan di dalam kurung
+            const regex = new RegExp(`\\(${item.category}\\)`, 'i');
+            printName = printName.replace(regex, `(${abbr})`);
+        }
+        
+        // Batasi nama item untuk padding
+        const namePart = `${printName.substring(0, MAX_WIDTH - 11)} x${item.qty}`; 
+        
         const space = MAX_WIDTH - namePart.length - totalStr.length;
+        let line = `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalStr}`;
         
-        let line = `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalStr}`; 
-        
-        if (discountAmount > 0) {
-            const discountStr = `  Disc: -${formatRp(discountAmount).padStart(8)}`;
+        if (item.discountAmount > 0) {
+            // REVISI 1: Ubah tampilan diskon menjadi angka Rupiah
+            const discountStr = ` Disc: -${formatRp(item.discountAmount).padStart(8)}`;
             line += `\n${discountStr.padStart(MAX_WIDTH)}`;
         }
         return line;
-    };
+    }
     
-    const noteLine = `Pelanggan: ${note.substring(0, MAX_WIDTH - 11)}`; 
+    const itemDetails = cart.map(i => createStrukLine(i)).join('\n');
+    
+    const kasirLine = padLine("Kasir: ", currentUser ? currentUser.email : "-");
+    const dateLine = padLine("Waktu: ", now);
+    const noteLine = padLine("Catatan: ", note);
+    const paymentLine = padLine("Bayar dg: ", paymentMethod);
+    const totalLine = padLine("TOTAL AKHIR: ", formatRp(finalTotal));
+    const bayarLine = paymentMethod === 'Cash' ? padLine("Bayar: ", formatRp(bayar)) : '';
+    const kembaliLine = (paymentMethod === 'Cash' && kembali > 0) ? padLine("Kembali: ", formatRp(kembali)) : '';
+    const discountLine = totalDiscount > 0 ? padLine("Diskon Total: ", formatRp(totalDiscount)) : '';
     
     const w=window.open("","_blank");
     w.document.write(`
-    <pre>
- ${copyType.toUpperCase()} COPY 
- 🍕 JIF PIZZA CONDET
- Kasir: ${currentUser.email}
- Tgl: ${now}
- ${'______________________________'.substring(0, MAX_WIDTH)}
- ${cart.map(i => createStrukLine(i.name, i.qty, i.price, i.discountAmount, i.finalPrice)).join('\n')}
- ${'______________________________'.substring(0, MAX_WIDTH)}
- Subtotal: ${formatRp(subtotal).padStart(12)}
- ${totalDiscount > 0 ? ` Disc: -${formatRp(totalDiscount).padStart(12)}\n` : ''} Total:    ${formatRp(finalTotal).padStart(12)}
- ${paymentMethod === 'Cash' ? ` Bayar:    ${formatRp(bayar).padStart(12)}\n Kembali:  ${formatRp(kembali).padStart(12)}` : ''}
- Bayar: ${paymentMethod} | Order: ${orderType}
+        <pre style='font-family:monospace; font-size: 10px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
+ === JIF PIZZA CONDET ===
+ ${kasirLine}
+ ${dateLine}
  ${noteLine}
  ${'______________________________'.substring(0, MAX_WIDTH)}
- ${copyType === 'Customer' ? '*** TERIMA KASIH ***' : '*** UNTUK KASIR ***'}
+ ${itemDetails.trim()}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ ${discountLine}
+ ${padLine("Subtotal Kotor: ", formatRp(subtotal))}
+ ${totalLine}
+ ${paymentLine}
+ ${bayarLine}
+ ${kembaliLine}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ ${padLine("Copy Type: ", copyType)}
+ ==============================
+     TERIMA KASIH TELAH ORDER
+ ==============================
         </pre>
     `);
     
     w.print();
 }
-// PERMINTAAN 8: Fungsi Cetak Ulang Struk
-function reprintTransaction(transaction) {
-    if (!currentUser || currentUser.role !== 'Manager') {
-        alert("Akses ditolak. Hanya Manajer yang dapat menghapus transaksi.");
-        return;
-    }
 
-    // Set cart sementara untuk printing
-    const tempCart = transaction.items.map(item => ({
-        name: item.name,
-        price: item.price,
-        qty: item.qty,
+function reprintTransaction(transaction){
+    // ... (kode reprintTransaction)
+    const tempCart = transaction.items.map(item => ({ 
+        name: item.name, 
+        price: item.price, 
+        qty: item.qty, 
         category: item.category,
         baseMenuName: item.baseMenuName,
-        discountPercent: item.discountPercent,
-        discountAmount: item.discountAmount,
+        // REVISI 1: Hapus discountPercent jika tidak digunakan
+        discountAmount: item.discountAmount || 0, 
         finalPrice: item.finalPrice 
     }));
-
     // Simulasikan data pembayaran untuk struk
     const isCash = transaction.paymentMethod === 'Cash';
     const finalTotal = transaction.total;
     // Karena data bayar dan kembali tidak disimpan, kita asumsikan Bayar = Total Akhir jika non-Cash.
     const bayar = isCash ? (transaction.subtotal || transaction.total) : finalTotal;
-    const kembali = isCash ? (bayar - finalTotal) : 0; 
-
+    const kembali = isCash ? (bayar - finalTotal) : 0;
+    
     // Simpan cart lama
     const originalCart = [...cart];
     cart = tempCart; 
-
+    
     // Panggil fungsi cetak ganda
     printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Customer (REPRINT)");
     printStruk(transaction.subtotal || finalTotal, transaction.discountAmount || 0, finalTotal, bayar, kembali, transaction.note || transaction.orderType, transaction.paymentMethod, "Kasir (REPRINT)");
@@ -954,252 +985,246 @@ function reprintTransaction(transaction) {
     cart = originalCart;
     alert("Cetak ulang selesai!");
 }
+
 // ======================================================================
 // FUNGSI MANAJEMEN MENU & DISKON
 // ======================================================================
 function addMenu(){
-    const name=$("mName").value.trim();
-    const category=$("mCategory").value;
-    const priceOffline=Number($("mPriceOffline").value);
-    // REVISI 3: Ambil markup spesifik
-    const markupGojek=Number($("mGojekMarkup").value);
-    const markupGrab=Number($("mGrabMarkup").value);
-    const markupShopee=Number($("mShopeeMarkup").value);
+    if (currentUser.role !== 'Manager') return alert("Akses ditolak. Hanya Manajer yang bisa menambah menu.");
 
-    if(!name || !category || !priceOffline) return alert("Isi Nama Menu, Kategori, dan Harga Offline.");
+    const name = $("mName").value.trim();
+    const category = $("mCategory").value;
+    const priceOffline = Number($("mPriceOffline").value);
+    const markupGojek = Number($("mGojekMarkup").value);
+    const markupGrab = Number($("mGrabMarkup").value);
+    const markupShopee = Number($("mShopeeMarkup").value);
+    if (!name || !category || priceOffline <= 0) {
+        return alert("Nama, Kategori, dan Harga Offline harus diisi dengan benar.");
+    }
     
-    const uniqueItemName = `${name} (${category})`;
+    // Buat nama unik untuk mencari menu
+    const uniqueName = `${name} (${category})`; 
+    
+    if (store.menus.find(m => m.uniqueName === uniqueName)) {
+        return alert(`Menu dengan nama "${uniqueName}" sudah ada.`);
+    }
 
-    if(store.menus.find(m => m.uniqueName === uniqueItemName)) return alert("Menu dengan nama dan kategori ini sudah ada. Hapus dulu untuk mengubah.");
-
-    const menuData = { 
-        name: name, 
-        category: category,
-        uniqueName: uniqueItemName,
-        priceOffline: priceOffline,
-        // REVISI 3: Simpan markup spesifik
-        markupGojek: markupGojek,
-        markupGrab: markupGrab,
-        markupShopee: markupShopee,
-        isExtra: category === 'Extra' 
+    const newMenu = {
+        uniqueName,
+        baseMenuName: name, // Nama menu tanpa kategori
+        category,
+        priceOffline,
+        markupGojek,
+        markupGrab,
+        markupShopee,
+        addedBy: currentUser.email,
+        dateAdded: new Date().toISOString()
     };
-
-    store.menus.push(menuData);
-    saveStore();
     
-    $("mName").value=""; 
-    $("mCategory").value="";
-    $("mPriceOffline").value=""; 
-    // REVISI 3: Reset input baru
-    $("mGojekMarkup").value=""; 
-    $("mGrabMarkup").value=""; 
-    $("mShopeeMarkup").value=""; 
+    store.menus.push(newMenu);
+    saveStore();
+    renderMenuEditor(); 
+    alert(`Menu "${uniqueName}" berhasil ditambahkan.`);
+    
+    $("mName").value = "";
+    $("mCategory").value = "";
+    $("mPriceOffline").value = "";
+    $("mGojekMarkup").value = "";
+    $("mGrabMarkup").value = "";
+    $("mShopeeMarkup").value = "";
+}
 
-    renderMenus();
-    renderMenuEditor();
+function deleteMenu(uniqueName){
+    if (currentUser.role !== 'Manager') return alert("Akses ditolak.");
+    if (confirm(`Yakin ingin menghapus menu ${uniqueName}?`)) {
+        store.menus = store.menus.filter(m => m.uniqueName !== uniqueName);
+        saveStore();
+        renderMenuEditor();
+        alert(`Menu ${uniqueName} berhasil dihapus.`);
+    }
 }
 
 function renderMenuEditor(){
-    const root=$("menuEditor");
-    root.innerHTML="";
-    
-    store.menus.forEach((m,i)=>{
-        const priceOffline = formatRp(m.priceOffline);
-        // REVISI 3: Tampilkan harga online spesifik
-        const priceGojek = formatRp(m.priceOffline + (m.markupGojek || 0));
-        const priceGrab = formatRp(m.priceOffline + (m.markupGrab || 0));
-        const priceShopee = formatRp(m.priceOffline + (m.markupShopee || 0));
-
-        const priceDetail = `
-            OFFLINE: ${priceOffline} <br>
-            Gojek: ${priceGojek} | Grab: ${priceGrab} | Shopee: ${priceShopee}
-        `;
-
-        const div=document.createElement("div");
-        div.className="menu-item";
-        div.innerHTML=`
-            <div>
-                <strong>${m.name} (${m.category})</strong><br>
-                <small style="line-height: 1.4; display: block;">${priceDetail}</small>
-            </div>
-            <button class='btn danger' onclick='delMenu(${i})'>Hapus</button>
-        `;
-        root.appendChild(div);
-    });
-}
-function delMenu(i){store.menus.splice(i,1);saveStore();renderMenus();renderMenuEditor();}
-
-function deleteTransaction(id) {
-    if (!currentUser || currentUser.role !== 'Manager') {
-        alert("Akses ditolak. Hanya Manajer yang dapat menghapus transaksi.");
+    if (currentUser.role !== 'Manager') {
+        $("menuEditor").innerHTML = "<p>Anda tidak memiliki akses ke fitur ini.</p>";
         return;
     }
-
-    if (confirm(`Yakin ingin menghapus Transaksi ID: ${id}? Tindakan ini tidak dapat dibatalkan.`)) {
+    const root=$("menuEditor");
+    root.innerHTML="<h4 style='margin-top: 20px;'>Daftar Menu Tersedia:</h4>";
+    
+    if(store.menus.length===0){
+        root.innerHTML+="<p>Belum ada menu yang terdaftar.</p>";
+        return;
+    }
+    
+    const table = document.createElement('table');
+    table.className = 'report-table';
+    table.innerHTML = `
+        <thead>
+            <tr>
+                <th>Nama Menu</th>
+                <th>Offline (Rp)</th>
+                <th>Gojek Markup (Rp)</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    `;
+    const tbody = table.querySelector('tbody');
+    
+    store.menus.sort((a, b) => (a.uniqueName > b.uniqueName) ? 1 : -1).forEach(m => {
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td>${m.uniqueName}</td>
+            <td>${formatRp(m.priceOffline)}</td>
+            <td>+${formatRp(m.markupGojek)}</td>
+            <td><button class='btn danger' onclick="deleteMenu('${m.uniqueName.replace(/'/g, "\\'")}')">Hapus</button></td>
+        `;
+    });
+    
+    root.appendChild(table);
+}
+// ======================================================================
+// FUNGSI TRANSAKSI & LAPORAN
+// ======================================================================
+function deleteTransaction(id){
+    if (currentUser.role !== 'Manager') return alert("Akses ditolak. Hanya Manajer yang dapat menghapus transaksi.");
+    if (confirm("Yakin ingin menghapus transaksi ini? Aksi ini tidak dapat dibatalkan.")) {
         store.transactions = store.transactions.filter(t => t.id !== id);
         saveStore();
+        showReport('today'); // Reload laporan
         alert("Transaksi berhasil dihapus.");
-        showReport('today'); 
     }
 }
-  // ======================================================================
+
+// ======================================================================
 // FUNGSI LAPORAN, GRAFIK, DAN CETAK
 // ======================================================================
 function getFilteredTransactions(filterType = null, dateInputTrigger = false) {
-    const transactions = store.transactions;
-    const now = new Date();
-    const today = getDateOnly(now);
-    let startDate = null;
-    let endDate = null;
+    const today = getDateOnly(new Date().toISOString());
+    const yesterday = today - 86400000; // 24 hours in ms
+    const selectedDateValue = $("reportDate").value;
     
-    if (dateInputTrigger) {
-        const dateValue = $("reportDate").value;
-        if (!dateValue) {
-            return [];
-        }
-        
-        const selectedDate = new Date(dateValue);
-        
-        if (filterType === 'month' || (selectedDate.getDate() === 1 && new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getDate() === selectedDate.getDate())) {
-            startDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1).getTime();
-            endDate = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0).getTime();
-        } else {
-            startDate = getDateOnly(selectedDate);
-            endDate = startDate; 
-        }
+    let filteredTrx = [];
+    let reportPeriod = "Hari Ini";
 
-    } else if (filterType === 'today') {
-        startDate = today;
-        endDate = today;
+    if (dateInputTrigger && selectedDateValue) {
+        const selectedDate = getDateOnly(selectedDateValue);
+        filteredTrx = store.transactions.filter(t => getDateOnly(t.date) === selectedDate);
+        reportPeriod = new Date(selectedDate).toLocaleDateString("id-ID", { day: 'numeric', month: 'long', year: 'numeric' });
     } else if (filterType === 'yesterday') {
-        startDate = today - (24 * 60 * 60 * 1000);
-        endDate = startDate;
+        filteredTrx = store.transactions.filter(t => getDateOnly(t.date) === yesterday);
+        reportPeriod = "Kemarin";
     } else if (filterType === 'month') {
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-        endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0).getTime(); 
-    } 
-
-    if (startDate !== null) {
-        return transactions.filter(t => {
-            const trxDateOnly = getDateOnly(t.date);
-            return trxDateOnly >= startDate && trxDateOnly <= endDate;
+        const currentMonth = new Date().getMonth();
+        const currentYear = new Date().getFullYear();
+        filteredTrx = store.transactions.filter(t => {
+            const d = new Date(t.date);
+            return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
         });
+        reportPeriod = "Bulan Ini";
+    } else { // 'today' or default
+        filteredTrx = store.transactions.filter(t => getDateOnly(t.date) === today);
+        reportPeriod = "Hari Ini";
     }
-    return transactions; 
+    
+    return { filteredTrx, reportPeriod };
 }
-
-
 function showReport(filterType = 'today', dateInputTrigger = false){
-    let reportPeriod;
-    let activeFilter = filterType; 
-    let selectedDate = null; 
+    const { filteredTrx, reportPeriod } = getFilteredTransactions(filterType, dateInputTrigger);
 
-    if (dateInputTrigger) {
-        selectedDate = $("reportDate").value;
-        if (!selectedDate) {
-            alert("Silakan pilih tanggal terlebih dahulu.");
-            return;
-        }
-        const selDateObj = new Date(selectedDate);
-        if (selDateObj.getDate() === 1) { 
-            reportPeriod = `Bulan ${selDateObj.toLocaleDateString('id-ID', {month:'long', year:'numeric'})}`;
-            activeFilter = 'month'; 
-        } else {
-            reportPeriod = selDateObj.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-            activeFilter = 'daily';
-        }
-    } else if (filterType === 'today') {
-        reportPeriod = 'Hari Ini';
-    } else if (filterType === 'yesterday') {
-        reportPeriod = 'Kemarin';
-    } else if (filterType === 'month') {
-        reportPeriod = 'Bulan Ini';
-    } else {
-        reportPeriod = 'Semua Transaksi';
-    }
-    
-    const filteredTrx = getFilteredTransactions(activeFilter, dateInputTrigger);
+    let totalSales = 0;
+    let totalDiscount = 0;
+    let totalSubtotal = 0;
+    let salesByOutlet = {};
+    let salesByPayment = {};
 
-    renderSummary(filteredTrx, reportPeriod);
-    renderSalesByMenu(filteredTrx); 
-    renderTransactionDetails(filteredTrx);
-    renderSalesGraph(filteredTrx, activeFilter, selectedDate); 
-}
-// FUNGSI GRAFIK (Chart.js)
-function renderSalesGraph(transactions, filterType, selectedDate) {
-    const canvas = $("salesChart");
-    if (salesChartInstance) {
-        salesChartInstance.destroy();
-    }
-    
-    let labels = [];
-    let salesData = [];
-    let title = "Grafik Penjualan";
-    const now = new Date();
+    filteredTrx.forEach(t => {
+        totalSales += t.total;
+        totalDiscount += t.discountAmount;
+        totalSubtotal += t.subtotal;
 
-    if (filterType === 'today' || filterType === 'yesterday' || filterType === 'daily') {
-        title = "Grafik Penjualan Harian (Per Jam)";
-        for (let i = 0; i < 24; i++) {
-            labels.push(`${i}:00`);
-            salesData.push(0);
-        }
-        transactions.forEach(t => {
-            const hour = new Date(t.date).getHours();
-            if (hour >= 0 && hour < 24) {
-                salesData[hour] += t.total;
-            }
-        });
-    } else if (filterType === 'month' || selectedDate) {
-        title = "Grafik Penjualan Per Hari";
-        let dateMap = {};
-        let start, end;
-
-        if (filterType === 'month') {
-            start = new Date(now.getFullYear(), now.getMonth(), 1);
-            end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-        } else if (selectedDate) {
-            const selectedDateObj = new Date(selectedDate);
-            const selectedMonth = selectedDateObj.getMonth();
-            const selectedYear = selectedDateObj.getFullYear();
-            
-            if (filterType === 'daily' && getDateOnly(selectedDateObj) === getDateOnly(selectedDateObj)) {
-                if (getDateOnly(selectedDateObj) === getDateOnly(now)) {
-                } else {
-                }
-            }
-            
-            start = new Date(selectedYear, selectedMonth, 1);
-            end = new Date(selectedYear, selectedMonth + 1, 0);
-        }
+        const outlet = t.orderType || 'Offline';
+        const method = t.paymentMethod || 'Cash';
         
-        if (start && end) {
-            for (let d = start; d <= end; d.setDate(d.getDate() + 1)) {
-                const dateStr = new Date(d).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' });
-                labels.push(dateStr);
-                dateMap[getDateOnly(d)] = labels.length - 1; 
-                salesData.push(0);
-            }
-            
-            transactions.forEach(t => {
-                const dayKey = getDateOnly(t.date);
-                const index = dateMap[dayKey];
-                if (index !== undefined) {
-                    salesData[index] += t.total;
-                }
-            });
-        }
+        salesByOutlet[outlet] = (salesByOutlet[outlet] || 0) + t.total;
+        salesByPayment[method] = (salesByPayment[method] || 0) + t.total;
+    });
+
+    // Update Nav Button Active State
+    document.querySelectorAll('#laporanPage .navbar button').forEach(btn => btn.classList.remove('active-tab'));
+    if (!dateInputTrigger) {
+        const activeBtn = document.querySelector(`#laporanPage button[onclick="showReport('${filterType}')"]`);
+        if(activeBtn) activeBtn.classList.add('active-tab');
     }
 
-    const ctx = canvas.getContext('2d');
+    $("laporanSummary").innerHTML = `
+        <div class="summary-card card-sales"><h4>Total Penjualan Akhir</h4><div class="value">${formatRp(totalSales)}</div></div>
+        <div class="summary-card card-count"><h4>Jumlah Transaksi</h4><div class="value">${filteredTrx.length} Nota</div></div>
+        <div class="summary-card card-subtotal"><h4>Subtotal Kotor</h4><div class="value">${formatRp(totalSubtotal)}</div></div>
+        <div class="summary-card card-discount"><h4>Total Diskon</h4><div class="value">-${formatRp(totalDiscount)}</div></div>
+    `;
+
+    // Render Detail Outlet & Pembayaran
+    const sortedOutlet = Object.entries(salesByOutlet).sort(([, a], [, b]) => b - a);
+    const sortedPayment = Object.entries(salesByPayment).sort(([, a], [, b]) => b - a);
+
+    $("laporanDetailSummary").innerHTML = `
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h4>By Outlet/Platform (${reportPeriod})</h4>
+                <ul class="detail-list">
+                    ${sortedOutlet.map(([outlet, total]) => `<li><span>${outlet}</span><span>${formatRp(total)}</span></li>`).join('')}
+                </ul>
+            </div>
+            <div style="flex: 1;">
+                <h4>By Payment Method (${reportPeriod})</h4>
+                <ul class="detail-list">
+                    ${sortedPayment.map(([method, total]) => `<li><span>${method}</span><span>${formatRp(total)}</span></li>`).join('')}
+                </ul>
+            </div>
+        </div>
+    `;
+
+    renderSalesByMenu(filteredTrx);
+    renderLaporanList(filteredTrx);
+    renderSalesChart(filteredTrx, filterType);
+}
+
+function renderSalesChart(filteredTrx, filterType = 'today') {
+    if (salesChartInstance) salesChartInstance.destroy();
+
+    let salesData = {};
+    let labelFormat = { month: 'short', day: 'numeric' };
+
+    if (filterType === 'month') {
+        labelFormat = { day: 'numeric' };
+        filteredTrx.forEach(t => {
+            const date = new Date(t.date).getDate();
+            salesData[date] = (salesData[date] || 0) + t.total;
+        });
+    } else { // Today, Yesterday, or Specific Day
+        labelFormat = { hour: '2-digit', minute: '2-digit' };
+        filteredTrx.forEach(t => {
+            const time = new Date(t.date).toLocaleTimeString("id-ID", labelFormat);
+            salesData[time] = (salesData[time] || 0) + t.total;
+        });
+    }
+
+    const labels = Object.keys(salesData).sort();
+    const data = labels.map(label => salesData[label]);
+
+    const ctx = $("salesChart").getContext('2d');
     salesChartInstance = new Chart(ctx, {
         type: 'bar',
         data: {
             labels: labels,
             datasets: [{
-                label: 'Total Penjualan Bersih',
-                data: salesData,
-                backgroundColor: 'rgba(75, 192, 192, 0.6)',
-                borderColor: 'rgba(75, 192, 192, 1)',
+                label: 'Penjualan Akhir (Rp)',
+                data: data,
+                backgroundColor: 'rgba(46, 125, 50, 0.8)', // Green
+                borderColor: 'rgba(46, 125, 50, 1)',
                 borderWidth: 1
             }]
         },
@@ -1207,369 +1232,282 @@ function renderSalesGraph(transactions, filterType, selectedDate) {
             responsive: true,
             scales: {
                 y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function(value) {
-                            if (parseInt(value) >= 1000) {
-                                return 'Rp ' + value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-                            } else {
-                                return 'Rp ' + value;
-                            }
-                        }
-                    }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: title
+                    beginAtZero: true
                 }
             }
         }
     });
 }
-// FUNGSI RENDER RINGKASAN BARU (Card Layout)
-function renderSummary(filteredTrx, filter) {
-    const root = $("laporanSummary");
-    // Tambahkan div baru untuk detail outlet/pembayaran
-    const detailRoot = $("laporanDetailSummary"); 
-
-    // Hitung total
-    const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
-    const totalSubtotal = filteredTrx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
-    const totalDiscount = filteredTrx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
-    const totalCount = filteredTrx.length;
-    
-    // Hitung Sales by Outlet
-    let salesByOutlet = {};
-    filteredTrx.forEach(t => {
-        const outlet = t.orderType || 'Offline';
-        salesByOutlet[outlet] = (salesByOutlet[outlet] || 0) + t.total;
-    });
-
-    // Hitung Sales by Payment Method
-    let salesByPayment = {};
-    filteredTrx.forEach(t => {
-        const method = t.paymentMethod || 'Cash';
-        salesByPayment[method] = (salesByPayment[method] || 0) + t.total;
-    });
-    
-    // --- Render Ringkasan Utama (Cards) ---
-    root.innerHTML = `
-        <div class="summary-card card-sales">
-            <h4>PENJUALAN BERSIH</h4>
-            <div class="value">${formatRp(totalSales)}</div>
-        </div>
-        <div class="summary-card card-count">
-            <h4>TOTAL TRANSAKSI</h4>
-            <div class="value">${totalCount} Nota</div>
-        </div>
-        <div class="summary-card card-discount">
-            <h4>DISKON TOTAL</h4>
-            <div class="value">${formatRp(totalDiscount)}</div>
-        </div>
-        <div class="summary-card card-subtotal">
-            <h4>SUBTOTAL KOTOR</h4>
-            <div class="value">${formatRp(totalSubtotal)}</div>
-        </div>
-    `;
-    
-    // --- Render Detail (Outlet & Payment) ---
-    let outletHtml = Object.entries(salesByOutlet).map(([type, total]) => 
-        `<li>${type} <span>${formatRp(total)}</span></li>`
-    ).join('');
-    
-    let paymentHtml = Object.entries(salesByPayment).map(([method, total]) => 
-        `<li>${method} <span>${formatRp(total)}</span></li>`
-    ).join('');
-
-    detailRoot.innerHTML = `
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-            <div>
-                <h5 style="margin-top: 0; color: #1976d2;">Penjualan Berdasarkan Outlet (${filter})</h5>
-                <ul class="detail-list">${outletHtml}</ul>
-            </div>
-            <div>
-                <h5 style="margin-top: 0; color: #1976d2;">Penjualan Berdasarkan Metode Bayar (${filter})</h5>
-                <ul class="detail-list">${paymentHtml}</ul>
-            </div>
-        </div>
-    `;
-
-    // Update periode di H3
-    const reportTitle = document.querySelector('#laporanPage h3').innerText = `Laporan Penjualan (${filter})`;
-}
 function renderSalesByMenu(filteredTrx) {
     const root = $("salesByMenu");
+    root.innerHTML = "";
+    
     let menuMix = {};
-
+    
     filteredTrx.forEach(t => {
         t.items.forEach(item => {
-            const finalPrice = item.finalPrice !== undefined ? item.finalPrice : (item.price * item.qty - (item.discountAmount || 0)); 
-            const itemTotal = item.price * item.qty;
-
-            if (!menuMix[item.name]) { 
-                menuMix[item.name] = { qty: 0, total: 0, finalSales: 0 };
-            }
-            menuMix[item.name].qty += item.qty;
-            menuMix[item.name].total += itemTotal; 
-            menuMix[item.name].finalSales += finalPrice; 
+            const name = item.name;
+            const itemTotal = item.finalPrice;
+            menuMix[name] = menuMix[name] || { qty: 0, finalSales: 0 };
+            menuMix[name].qty += item.qty;
+            menuMix[name].finalSales += itemTotal;
         });
     });
 
     if (Object.keys(menuMix).length === 0) {
-        root.innerHTML = "<p>Tidak ada penjualan menu di periode ini.</p>";
-        return;
-    }
-
-    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty); 
-
-    let html = `<table class="report-table">
-        <thead>
-            <tr><th>Nama Menu (Ukuran/Topping)</th><th>QTY Terjual</th><th>Penjualan Bersih</th></tr>
-        </thead>
-        <tbody>`;
-
-    sortedMenu.forEach(([name, data]) => {
-        html += `
-            <tr>
-                <td>${name}</td>
-                <td>${data.qty}</td>
-                <td>${formatRp(data.finalSales)}</td>
-            </tr>
-        `;
-    });
-
-    html += `</tbody></table>`;
-    root.innerHTML = html;
-}
-
-function renderTransactionDetails(filteredTrx) {
-    const root=$("laporanList");
-    root.innerHTML="";
-
-    if(filteredTrx.length===0){
-        root.innerHTML="<p>Tidak ada detail transaksi di periode ini.</p>";
+        root.innerHTML = "<p>Belum ada item terjual.</p>";
         return;
     }
     
-    const isManager = currentUser && currentUser.role === 'Manager'; 
-
-    filteredTrx.sort((a, b) => new Date(b.date) - new Date(a.date)).forEach(t=>{
-        const d=document.createElement("div");
-        d.className="order-item";
-        d.style.borderBottom = "1px solid #eee";
-        d.style.marginBottom = "10px";
-        
-        const noteDisplay = t.note ? t.note : t.orderType;
-
-        const deleteBtn = isManager ? 
-            `<button class='btn danger' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px; background: #c62828; margin-right: 10px;' onclick='deleteTransaction(${t.id})'>Hapus Transaksi</button>` : '';
-
-        // PERMINTAAN 8: Tambahkan tombol Cetak Ulang
-        const reprintBtn = `<button class='btn secondary' style='padding: 5px 10px; font-size: 0.8em; margin-top: 5px;' onclick='reprintTransaction(${JSON.stringify(t)})'>Cetak Ulang Struk</button>`;
-
-        const totalDiscount = t.discountAmount || 0;
-        const discountDisplay = totalDiscount > 0 ? 
-            `<p style="margin: 5px 0; color: #d32f2f;">Total Diskon: -${formatRp(totalDiscount)}</p>` : ''; 
-        
-        const subtotalDisplay = t.subtotal ? `Subtotal Kotor: ${formatRp(t.subtotal)}` : `Subtotal: ${formatRp(t.total)}`;
-        const paymentMethod = t.paymentMethod || 'Tunai'; 
-        
-        const itemDetails = t.items.map(i => {
-            const disc = i.discountAmount > 0 ? ` (Disc: ${formatRp(i.discountAmount)})` : '';
-            return `${i.name} x${i.qty} - ${formatRp(i.finalPrice)}${disc}`;
-        }).join('<br>');
-
-
-        d.innerHTML=`
-            <div><strong>Nota ID: ${t.id}</strong></div>
-            <div>Waktu: ${new Date(t.date).toLocaleString("id-ID")}<br>Pelanggan/Driver: ${noteDisplay}<br>${t.orderType} | Bayar: ${paymentMethod} oleh Kasir: ${t.user}</div>
-            <p style="margin: 5px 0; font-size: 0.9em;"><strong>Item Detail:</strong><br>${itemDetails}</p>
-            <div style="margin: 5px 0;">${subtotalDisplay}</div>
-            ${discountDisplay} 
-            <div style="font-weight: bold; color: #2e7d32;">Total Akhir: ${formatRp(t.total)}</div>
-            <div style="margin-top: 10px;">${deleteBtn}${reprintBtn}</div>
+    const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
+    
+    const ul = document.createElement('ul');
+    ul.className = 'detail-list';
+    ul.style.marginTop = '0'; 
+    ul.style.background = 'none';
+    ul.style.padding = '0';
+    
+    sortedMenu.forEach(([name, data]) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+            <span>${name} (${data.qty}x)</span>
+            <span>${formatRp(data.finalSales)}</span>
         `;
-        root.appendChild(d);
+        ul.appendChild(li);
     });
+    
+    root.appendChild(ul);
+}
+function renderLaporanList(filteredTrx) {
+    const root=$("laporanList");
+    root.innerHTML="";
+    
+    if(filteredTrx.length===0){
+        root.innerHTML="<p>Tidak ada transaksi pada periode ini.</p>";
+        return;
+    }
+    
+    const table=document.createElement('table');
+    table.className='report-table';
+    table.innerHTML=`
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Waktu</th>
+                <th>Order Type</th>
+                <th>Total Akhir</th>
+                <th>Kasir</th>
+                <th>Aksi</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    `;
+    const tbody=table.querySelector('tbody');
+    
+    filteredTrx.sort((a, b) => b.id - a.id).forEach(t => {
+        const row=tbody.insertRow();
+        const dateStr = new Date(t.date).toLocaleString("id-ID", { 
+            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' 
+        }).replace('.', ':');
+        row.innerHTML=`
+            <td>${t.id.toString().slice(-4)}</td>
+            <td>${dateStr}</td>
+            <td>${t.orderType} (${t.paymentMethod})</td>
+            <td>${formatRp(t.total)}</td>
+            <td>${t.user.split('@')[0]}</td>
+            <td>
+                <button class='btn secondary' style="font-size: 0.8em; padding: 5px;" onclick="reprintTransaction(${JSON.stringify(t).replace(/'/g, "\\'")})">Cetak Ulang</button>
+                ${currentUser && currentUser.role === 'Manager' ? `<button class='btn danger' style="font-size: 0.8em; padding: 5px; margin-left: 5px;" onclick="deleteTransaction(${t.id})">Hapus</button>` : ''}
+            </td>
+        `;
+    });
+    
+    root.appendChild(table);
 }
 // PERMINTAAN 5: Revisi fungsi printClosing untuk 58mm (MAX_WIDTH 30)
 function printClosing(){
     const today = new Date().toLocaleDateString("id-ID");
     const trx = store.transactions.filter(t => new Date(t.date).toLocaleDateString("id-ID") === today);
+    if(trx.length === 0) return alert("Tidak ada transaksi hari ini untuk dicetak.");
 
-    if(trx.length === 0) return alert("Tidak ada transaksi untuk hari ini.");
-
-    const totalSubtotal = trx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
-    const totalDiscount = trx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
-    const totalSales = trx.reduce((acc, t) => acc + t.total, 0);
-
-    const padLine = (label, value) => { 
-        const valueStr = String(value);
-        const labelLen = label.length;
-        const space = MAX_WIDTH - labelLen - valueStr.length;
-        return `${label}${Array(space > 0 ? space : 1).join('.')}${valueStr}`; 
-    };
-
+    let totalSales = 0;
+    let totalDiscount = 0;
+    let totalSubtotal = 0;
     let salesByPayment = {};
+    let menuMix = {};
+
     trx.forEach(t => {
-        const method = t.paymentMethod || 'Tunai';
+        totalSales += t.total;
+        totalDiscount += t.discountAmount;
+        totalSubtotal += t.subtotal;
+
+        const method = t.paymentMethod || 'Cash';
         salesByPayment[method] = (salesByPayment[method] || 0) + t.total;
+
+        t.items.forEach(item => {
+            const name = item.name;
+            const itemTotal = item.finalPrice; // Sudah bersih dari diskon
+            menuMix[name] = menuMix[name] || { qty: 0, finalSales: 0 };
+            menuMix[name].qty += item.qty;
+            menuMix[name].finalSales += itemTotal;
+        });
     });
-
-    const paymentDetail = Object.entries(salesByPayment).map(([method, total]) => 
-        padLine(`- ${method}:`, formatRp(total))
-    ).join('\n');
-
-
-    const menuMix = {};
-    trx.forEach(t => t.items.forEach(item => {
-        const finalPrice = item.finalPrice !== undefined ? item.finalPrice : (item.price * item.qty - (item.discountAmount || 0));
-        
-        if (!menuMix[item.name]) { 
-            menuMix[item.name] = { qty: 0, total: 0, finalSales: 0 };
-        }
-        menuMix[item.name].qty += item.qty;
-        menuMix[item.name].total += item.price * item.qty;
-        menuMix[item.name].finalSales += finalPrice;
-    }));
     
-    const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.finalSales).padStart(8); // Disesuaikan untuk 30
-        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${data.qty}`; // Disesuaikan untuk 30
+    const sortedPayment = Object.entries(salesByPayment).sort(([, a], [, b]) => b - a);
+    const paymentDetail = sortedPayment.map(([method, total]) => padLine(method, formatRp(total))).join('\n');
+    
+    // REVISI 4: Fungsi untuk mendapatkan singkatan kategori
+    const getAbbr = (cat) => {
+        if (cat === 'Large') return 'L';
+        if (cat === 'Reguler') return 'R';
+        if (cat === 'Separuh') return 'S';
+        if (cat === 'Extra') return 'EX';
+        return '';
+    }
+    
+    // REVISI 4: Modifikasi createReportLine untuk menyingkat kategori
+    const createReportLine = (name, data) => {
+        const totalRpStr = formatRp(data.finalSales).padStart(8);
+        
+        let printName = name; 
+        const categories = ['Large', 'Reguler', 'Separuh', 'Extra'];
+        const abbrMap = {'Large': 'L', 'Reguler': 'R', 'Separuh': 'S', 'Extra': 'EX'};
+
+        categories.forEach(cat => {
+            if (name.includes(`(${cat})`)) {
+                printName = name.replace(`(${cat})`, `(${abbrMap[cat]})`);
+            }
+        });
+        
+        const namePart = `${printName.substring(0, MAX_WIDTH - 11)} x${data.qty}`;
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
+        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
     };
 
     const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
     const menuDetail = sortedMenu.map(([name, data]) => createReportLine(name, data)).join('\n');
-
-
     const w=window.open("","_blank");
-    
     const kasirLine = padLine("Manajer/Kasir: ", currentUser ? currentUser.email : "-");
     const dateLine = padLine("Tanggal Cetak: ", new Date().toLocaleString("id-ID"));
     const totalTrxLine = padLine("Total Transaksi: ", `${trx.length} Nota`);
 
     w.document.write(`
-        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
+        <pre style='font-family:monospace; font-size: 10px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
  === CLOSING REPORT HARIAN ===
-        
  Outlet: JIF PIZZA CONDET
-${kasirLine}
-${dateLine}
-${'______________________________'.substring(0, MAX_WIDTH)} 
-RINGKASAN PENJUALAN
-${totalTrxLine}
-${padLine("Subtotal Kotor: ", formatRp(totalSubtotal))}
-${padLine("Diskon Total: ", formatRp(totalDiscount))}
-${padLine("TOTAL PENJUALAN AKHIR: ", formatRp(totalSales))}
-
-${'______________________________'.substring(0, MAX_WIDTH)}
-SALES BY PAYMENT METHOD
-${paymentDetail}
-
-${'______________________________'.substring(0, MAX_WIDTH)}
-SALES BY MENU (PRODUCT MIX)
-${menuDetail.trim()}
-${'______________________________'.substring(0, MAX_WIDTH)}
-==============================
-TERIMA KASIH, LAPORAN SELESAI
+ ${kasirLine}
+ ${dateLine}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ RINGKASAN PENJUALAN
+ ${totalTrxLine}
+ ${padLine("Subtotal Kotor: ", formatRp(totalSubtotal))}
+ ${padLine("Diskon Total: ", formatRp(totalDiscount))}
+ ${padLine("TOTAL PENJUALAN AKHIR: ", formatRp(totalSales))}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ SALES BY PAYMENT METHOD
+ ${paymentDetail}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ SALES BY MENU (PRODUCT MIX)
+ ${menuDetail.trim()}
+ ${'______________________________'.substring(0, MAX_WIDTH)}
+ ==============================
+ TERIMA KASIH, LAPORAN SELESAI
         </pre>
     `);
-    
     w.print();
 }
+
 // PERMINTAAN 5: Revisi fungsi printReport untuk 58mm (MAX_WIDTH 30)
 function printReport() {
     const dateInputTrigger = $("reportDate").value ? true : false;
     let activeFilter = 'today'; 
+    let reportPeriod = 'Hari Ini';
     
     if (dateInputTrigger) {
-        const selectedDate = $("reportDate").value;
-        const selDateObj = new Date(selectedDate);
-        if (selDateObj.getDate() === 1) { 
-            activeFilter = 'month'; 
-        } else {
-            activeFilter = 'daily';
-        }
-    }
-
-    const filteredTrx = getFilteredTransactions(activeFilter, dateInputTrigger);
-    
-    if (filteredTrx.length === 0) {
-        return alert("Tidak ada transaksi dalam periode ini untuk dicetak.");
-    }
-    
-    let reportPeriod;
-    if (dateInputTrigger) {
-        const selectedDate = $("reportDate").value;
-        const selDateObj = new Date(selectedDate);
-        if (selDateObj.getDate() === 1) { 
-            reportPeriod = `Bulan ${selDateObj.toLocaleDateString('id-ID', {month:'long', year:'numeric'})}`;
-        } else {
-            reportPeriod = selDateObj.toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'});
-        }
-    } else if (activeFilter === 'today') {
-        reportPeriod = 'Hari Ini';
-    } else if (activeFilter === 'yesterday') {
-        reportPeriod = 'Kemarin';
-    } else if (activeFilter === 'month') {
-        reportPeriod = 'Bulan Ini';
+        // Jika input tanggal diisi, override filterType
+        activeFilter = 'custom';
     } else {
-        reportPeriod = 'Semua Transaksi';
+        // Cek tombol aktif di UI untuk menentukan activeFilter jika tidak ada input tanggal
+        const activeBtn = document.querySelector('#laporanPage .navbar button.active-tab');
+        if (activeBtn) {
+            if (activeBtn.innerText === 'Kemarin') activeFilter = 'yesterday';
+            else if (activeBtn.innerText === 'Bulan Ini') activeFilter = 'month';
+            else activeFilter = 'today'; 
+        }
     }
-
-    const totalSubtotal = filteredTrx.reduce((acc, t) => acc + (t.subtotal || t.total), 0);
-    const totalDiscount = filteredTrx.reduce((acc, t) => acc + (t.discountAmount || 0), 0);
-    const totalSales = filteredTrx.reduce((acc, t) => acc + t.total, 0);
     
+    // Mendapatkan data transaksi
+    const { filteredTrx, reportPeriod: period } = getFilteredTransactions(activeFilter, dateInputTrigger);
+    reportPeriod = period; 
+    
+    if(filteredTrx.length === 0) return alert("Tidak ada transaksi untuk periode ini.");
+    
+    let totalSales = 0;
+    let totalDiscount = 0;
+    let totalSubtotal = 0;
     let salesByOutlet = {};
+    let menuMix = {};
+
     filteredTrx.forEach(t => {
-        const outlet = t.orderType || 'N/A';
+        totalSales += t.total;
+        totalDiscount += t.discountAmount;
+        totalSubtotal += t.subtotal;
+
+        const outlet = t.orderType || 'Offline';
         salesByOutlet[outlet] = (salesByOutlet[outlet] || 0) + t.total;
+
+        t.items.forEach(item => {
+            const name = item.name;
+            const itemTotal = item.finalPrice;
+            menuMix[name] = menuMix[name] || { qty: 0, finalSales: 0 };
+            menuMix[name].qty += item.qty;
+            menuMix[name].finalSales += itemTotal;
+        });
     });
 
-    const menuMix = {};
-    filteredTrx.forEach(t => t.items.forEach(item => {
-        const finalPrice = item.finalPrice !== undefined ? item.finalPrice : (item.price * item.qty - (item.discountAmount || 0));
+    const sortedOutlet = Object.entries(salesByOutlet).sort(([, a], [, b]) => b - a);
+    const outletDetail = sortedOutlet.map(([outlet, total]) => padLine(outlet, formatRp(total))).join('\n');
+
+    // REVISI 4: Fungsi untuk mendapatkan singkatan kategori (diambil dari printClosing)
+    const getAbbr = (cat) => {
+        if (cat === 'Large') return 'L';
+        if (cat === 'Reguler') return 'R';
+        if (cat === 'Separuh') return 'S';
+        if (cat === 'Extra') return 'EX';
+        return '';
+    }
+    
+    // REVISI 4: Modifikasi createReportLine untuk menyingkat kategori (diambil dari printClosing)
+    const createReportLine = (name, data) => {
+        const totalRpStr = formatRp(data.finalSales).padStart(8);
         
-        if (!menuMix[item.name]) { menuMix[item.name] = { qty: 0, total: 0, finalSales: 0 }; }
-        menuMix[item.name].qty += item.qty;
-        menuMix[item.name].total += item.price * item.qty;
-        menuMix[item.name].finalSales += finalPrice;
-    }));
+        let printName = name; 
+        const categories = ['Large', 'Reguler', 'Separuh', 'Extra'];
+        const abbrMap = {'Large': 'L', 'Reguler': 'R', 'Separuh': 'S', 'Extra': 'EX'};
+
+        categories.forEach(cat => {
+            if (name.includes(`(${cat})`)) {
+                printName = name.replace(`(${cat})`, `(${abbrMap[cat]})`);
+            }
+        });
+        
+        const namePart = `${printName.substring(0, MAX_WIDTH - 11)} x${data.qty}`;
+        const space = MAX_WIDTH - namePart.length - totalRpStr.length;
+        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
+    };
 
     const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
-    
-    const padLine = (label, value) => {
-        const valStr = String(value);
-        const labelLen = label.length;
-        const space = MAX_WIDTH - labelLen - valStr.length;
-        return `${label}${Array(space > 0 ? space : 1).join('.')}${valStr}`; 
-    };
-    const createReportLine = (name, data) => { 
-        const totalRpStr = formatRp(data.finalSales).padStart(8); 
-        const namePart = `${name.substring(0, MAX_WIDTH - 11)} x${data.qty}`; 
-        const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`; 
-    };
-
-    const outletDetail = Object.entries(salesByOutlet).map(([type, total]) => 
-        padLine(`- ${type}:`, formatRp(total))
-    ).join('\n');
-    
     const menuDetail = sortedMenu.map(([name, data]) => createReportLine(name, data)).join('\n');
-
-    const w = window.open("", "_blank");
+    
+    const w=window.open("","_blank");
     
     const kasirLine = padLine("Manajer/Kasir: ", currentUser ? currentUser.email : "-");
     const dateLine = padLine("Tanggal Cetak: ", new Date().toLocaleString("id-ID"));
     const totalTrxLine = padLine("Total Transaksi: ", `${filteredTrx.length} Nota`);
 
     w.document.write(`
-        <pre style='font-family:monospace; font-size: 14px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
+        <pre style='font-family:monospace; font-size: 10px; line-height: 1.2; width: 58mm; max-width: 58mm;'>
         
  === LAPORAN PENJUALAN PERIODE ===
         
@@ -1600,18 +1538,20 @@ LAPORAN SELESAI
     
     w.print();
 }
+
+const padLine = (label, value) => {
+    const valStr = String(value);
+    const labelLen = label.length;
+    const space = MAX_WIDTH - labelLen - valStr.length;
+    return `${label}${Array(space > 0 ? space : 1).join('.')}${valStr}`;
+};
 window.onload=()=>{
   if (currentUser) {
-    if(currentUser.role === 'Manager'){
-      $("userRoleDisplay").innerText = `Manajer: ${currentUser.email}`;
-    } else {
-      $("userRoleDisplay").innerText = `Kasir: ${currentUser.email}`;
-    }
     activateTab('home');
   } else {
     showLogin();
   }
-};
+}
 </script>
 </body>
 </html>
