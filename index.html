@@ -291,11 +291,19 @@ input, select{padding:8px;border:1px solid #ccc;border-radius:6px;width:100%;mar
   <p id="userRoleDisplay">Mode Offline</p>
 </header>
 <div id="appNavbar" class="navbar hidden"> 
+</button>
   <button id="nav-home" class="secondary-nav" onclick="activateTab('home')">Home</button>
   <button id="nav-kasir" class="secondary-nav" onclick="activateTab('kasir')">Kasir</button>
   <button id="nav-menu" class="secondary-nav" onclick="activateTab('menu')">Menu</button> 
   <button id="nav-laporan" class="secondary-nav" onclick="activateTab('laporan');showReport('today')">Laporan</button>
   <button id="nav-logout" class="secondary-nav" onclick="logout()">Logout</button>
+<button id="btn-printer-connect" class="secondary-nav" title="Pengaturan Printer" onclick="(btDevice && btDevice.gatt && btDevice.gatt.connected) ? disconnectPrinter() : connectPrinter()">
+  <!-- SVG gear kecil -->
+  <svg width="20" height="20" viewBox="0 0 24 24" style="vertical-align:middle">
+    <path fill="currentColor" d="M12 8.6A3.4 3.4 0 1 0 12 15.4 3.4 3.4 0 0 0 12 8.6m7.4 1.5l1.9-1.2-1-1.7-2.2.4a7.6 7.6 0 0 0-1.1-1.1l.4-2.2-1.7-1-1.2 1.9A7.3 7.3 0 0 0 12 3.6 7.3 7.3 0 0 0 8.8 4.2L7.6 2.3 5.9 3.3l.4 2.2a7.6 7.6 0 0 0-1.1 1.1l-2.2-.4-1 1.7 1.9 1.2A7.3 7.3 0 0 0 3.6 12a7.3 7.3 0 0 0 .6 3.2L2.3 16.4l1 1.7 2.2-.4c.3.4.6.8 1.1 1.1l-.4 2.2 1.7 1 1.2-1.9c1 .4 2.1.6 3.2.6s2.2-.2 3.2-.6l1.2 1.9 1.7-1-.4-2.2c.4-.3.8-.6 1.1-1.1l2.2.4 1-1.7-1.9-1.2c.4-1 .6-2.1.6-3.2s-.2-2.2-.6-3.2z"/>
+  </svg>
+  <span id="printerStatus" style="margin-left:6px">Terputus</span>
+</button>
 </div>
 <div id="loginPage" class="container">
   <h2>Login</h2>
@@ -513,7 +521,7 @@ function calculatePrice(menu) {
 // ======================================================================
 function showLogin(){
   $("appHeader").classList.remove("hidden");
-  $("appNavbar").classList.add("hidden");
+  $("appNavbar").classList.remove("hidden"); // Tampilkan navbar agar tombol logout terlihat (jika ada)
   ["homePage","kasirPage","menuPage","laporanPage"].forEach(id=>$(id).classList.add("hidden"));
   $("loginPage").classList.remove("hidden");
   
@@ -732,7 +740,7 @@ function updateItemDiscount(index, inputElement) {
         }
         if (discDisplayElement) {
             // Kita hanya perlu update isi textnya
-            discDisplayElement.innerText = `Diskon: ${formatRp(item.discountAmount)}`;
+            discDisplayElement.innerText = `Disc: ${formatRp(item.discountAmount)}`;
         }
     }
     
@@ -975,8 +983,12 @@ function printStruk(subtotal, totalDiscount, finalTotal, bayar, kembali, note, p
         
         if (item.discountAmount > 0) {
             // REVISI 1: Ubah tampilan diskon menjadi angka Rupiah
-            const discountStr = ` Disc: -${formatRp(item.discountAmount).padStart(8)}`;
-            line += `\n${discountStr.padStart(MAX_WIDTH)}`;
+            // START REVISI (PENYEMPURNAAN FORMATTING)
+            const discLabel = "Diskon:";
+            const discValue = `-${formatRp(item.discountAmount)}`;
+            const spaceForDisc = MAX_WIDTH - discLabel.length - discValue.length; 
+            line += `\n${discLabel}${Array(Math.max(1, spaceForDisc)).join('.')}${discValue}`;
+            // END REVISI
         }
         return line;
     }
@@ -1464,14 +1476,16 @@ function printClosing(){
         const abbrMap = {'Large': 'L', 'Reguler': 'R', 'Separuh': 'S', 'Extra': 'EX'};
 
         categories.forEach(cat => {
-            if (name.includes(`(${cat})`)) {
-                printName = name.replace(`(${cat})`, `(${abbrMap[cat]})`);
+            // Periksa apakah nama mengandung kategori lengkap
+            const regex = new RegExp(`\\(${cat}\\)`, 'i');
+            if (regex.test(printName)) {
+                printName = printName.replace(regex, `(${abbrMap[cat]})`);
             }
         });
         
         const namePart = `${printName.substring(0, MAX_WIDTH - 11)} x${data.qty}`;
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
+        return `${namePart}${Array(Math.max(1, space)).join('.')}${totalRpStr}`; // Menggunakan Math.max(1, space)
     };
 
     const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
@@ -1575,14 +1589,16 @@ function printReport() {
         const abbrMap = {'Large': 'L', 'Reguler': 'R', 'Separuh': 'S', 'Extra': 'EX'};
 
         categories.forEach(cat => {
-            if (name.includes(`(${cat})`)) {
-                printName = name.replace(`(${cat})`, `(${abbrMap[cat]})`);
+            // Periksa apakah nama mengandung kategori lengkap
+            const regex = new RegExp(`\\(${cat}\\)`, 'i');
+            if (regex.test(printName)) {
+                printName = printName.replace(regex, `(${abbrMap[cat]})`);
             }
         });
         
         const namePart = `${printName.substring(0, MAX_WIDTH - 11)} x${data.qty}`;
         const space = MAX_WIDTH - namePart.length - totalRpStr.length;
-        return `${namePart}${Array(space > 0 ? space : 1).join('.')}${totalRpStr}`;
+        return `${namePart}${Array(Math.max(1, space)).join('.')}${totalRpStr}`; // Menggunakan Math.max(1, space)
     };
 
     const sortedMenu = Object.entries(menuMix).sort(([, a], [, b]) => b.qty - a.qty);
@@ -1626,12 +1642,16 @@ LAPORAN SELESAI
     
     w.print();
 }
+
+// START REVISI (PENYEMPURNAAN FORMATTING)
 const padLine = (label, value) => {
     const valStr = String(value);
     const labelLen = label.length;
     const space = MAX_WIDTH - labelLen - valStr.length;
-    return `${label}${Array(space > 0 ? space : 1).join('.')}${valStr}`;
+    // Menggunakan Math.max(1, space) untuk memastikan minimal 1 titik atau lebih jika space positif
+    return `${label}${Array(Math.max(1, space)).join('.')}${valStr}`; 
 };
+// END REVISI
 window.onload=()=>{
   if (currentUser) {
     activateTab('home');
@@ -1640,5 +1660,122 @@ window.onload=()=>{
   }
 }
 </script>
+<!-- === RP20n PROFESSIONAL BLUETOOTH + ESC/POS MODULE (SINGLE COPY) === -->
+<script>
+/* RP20n Bluetooth + ESC/POS (single copy) */
+
+// CONFIG
+const PRINTER_SERVICE_UUIDS = ['0000ffe0-0000-1000-8000-00805f9b34fb','ffe0','000018f0-0000-1000-8000-00805f9b34fb'];
+const PRINTER_CHAR_UUIDS = ['0000ffe1-0000-1000-8000-00805f9b34fb','ffe1'];
+const MAX_CHARS_58MM = 32;
+let PRINTER_CODEPAGE_N = 0x00;
+const INIT_PRINTER = new Uint8Array([0x1B,0x40]);
+const SET_CODEPAGE = ()=> new Uint8Array([0x1B,0x74,PRINTER_CODEPAGE_N]);
+const CUT_PARTIAL = new Uint8Array([0x1D,0x56,0x01]);
+
+let btDevice=null, btServer=null, btService=null, btCharacteristic=null;
+
+function setPrinterStatus(text, ok){ const el = document.getElementById('printerStatus'); if(el){ el.innerText = text; el.style.color = ok? '#2e7d32':'#c62828'; } console.log('[PrinterStatus]', text); }
+
+async function connectPrinter(){
+  if(!navigator.bluetooth){ alert('Browser tidak mendukung Web Bluetooth. Gunakan Chrome/Edge Android.'); return false; }
+  try{
+    setPrinterStatus('Mencari...', false);
+    btDevice = await navigator.bluetooth.requestDevice({ acceptAllDevices: true, optionalServices: PRINTER_SERVICE_UUIDS });
+    btDevice.addEventListener('gattserverdisconnected', onBluetoothDisconnected);
+    btServer = await btDevice.gatt.connect();
+    for(const s of PRINTER_SERVICE_UUIDS){ try{ btService = await btServer.getPrimaryService(s); break; }catch(e){} }
+    if(!btService){ const svcs = await btServer.getPrimaryServices(); if(svcs.length) btService = svcs[0]; }
+    for(const c of PRINTER_CHAR_UUIDS){ try{ btCharacteristic = await btService.getCharacteristic(c); break; }catch(e){} }
+    if(!btCharacteristic){ const chars = await btService.getCharacteristics(); for(const ch of chars){ if(ch.properties.write||ch.properties.writeWithoutResponse){ btCharacteristic = ch; break;} } }
+    if(!btCharacteristic) throw new Error('Characteristic write tidak ditemukan pada service printer.');
+    setPrinterStatus('Terhubung', true);
+    alert('Printer terhubung: ' + (btDevice.name||btDevice.id));
+    return true;
+  }catch(err){
+    console.error('connectPrinter',err);
+    setPrinterStatus('Gagal', false);
+    alert('Gagal terhubung: '+(err.message||err));
+    return false;
+  }
+}
+
+function onBluetoothDisconnected(){ setPrinterStatus('Terputus', false); btDevice=null; btServer=null; btService=null; btCharacteristic=null; }
+async function disconnectPrinter(){ try{ if(btDevice && btDevice.gatt.connected) btDevice.gatt.disconnect(); }catch(e){console.warn(e);} onBluetoothDisconnected(); }
+
+async function writeToCharacteristic(bytes){
+  if(!btCharacteristic) throw new Error('Printer belum terhubung.');
+  const CHUNK = 512; let offset=0;
+  while(offset < bytes.length){
+    const end = Math.min(offset+CHUNK, bytes.length);
+    const slice = bytes.slice(offset,end);
+    if(btCharacteristic.properties.write){
+      await btCharacteristic.writeValue(slice);
+    } else if(btCharacteristic.properties.writeWithoutResponse){
+      await btCharacteristic.writeValueWithoutResponse(slice);
+    } else throw new Error('Characteristic tidak mendukung write.');
+    offset = end;
+    await new Promise(r=>setTimeout(r,30));
+  }
+}
+
+function wrapText(text,width=MAX_CHARS_58MM){ const words=String(text).split(' '); const lines=[]; let cur=''; for(const w of words){ if((cur+' '+w).trim().length<=width) cur=(cur+' '+w).trim(); else{ if(cur) lines.push(cur); let rem=w; while(rem.length>width){ lines.push(rem.substring(0,width)); rem=rem.substring(width); } cur=rem; } } if(cur) lines.push(cur); return lines; }
+function formatLine(left,right,width=MAX_CHARS_58MM){ left=String(left); right=String(right); const space = width - left.length - right.length; if(space>=0) return left + ' '.repeat(space) + right; const leftAllowed = Math.max(0, width - right.length - 1); return left.substring(0,leftAllowed) + ' ' + right; }
+function formatItemLine(name,qty,priceStr,width=MAX_CHARS_58MM){ const qtyPart = ' x'+qty; const avail = width - qtyPart.length - priceStr.length; let nm = name; if(nm.length>avail) nm = nm.substring(0,Math.max(0,avail-1)); return formatLine(nm+qtyPart, priceStr, width); }
+function formatRpNumber(n){ const num = typeof n==='number'?n:parseFloat(n)||0; return num.toLocaleString('id-ID'); }
+
+function buildEscPosFromLines(lines){
+  const enc = new TextEncoder(); const text = lines.join('\n') + '\n\n\n'; const txt = enc.encode(text);
+  const init = INIT_PRINTER; const cp = SET_CODEPAGE();
+  const out = new Uint8Array(init.length + cp.length + txt.length + CUT_PARTIAL.length);
+  let p=0; out.set(init,p); p+=init.length; out.set(cp,p); p+=cp.length; out.set(txt,p); p+=txt.length; out.set(CUT_PARTIAL,p);
+  return out;
+}
+
+async function printToBluetooth(lines){
+  if(!btCharacteristic || !btDevice || !btDevice.gatt.connected) throw new Error('Printer BT belum terhubung.');
+  const payload = buildEscPosFromLines(lines);
+  await writeToCharacteristic(payload);
+}
+
+window.printStruk = async function(subtotal,totalDiscount,finalTotal,bayar,kembali,note,paymentMethod,queueNumber,copyType){
+  try{
+    const items = (typeof cart!=='undefined' && Array.isArray(cart)) ? cart.map(i=>({...i})) : [];
+    const lines=[]; const center = t=>{ const pad = Math.floor((MAX_CHARS_58MM - String(t).length)/2); return ' '.repeat(Math.max(0,pad)) + t; };
+    lines.push(center('JIF PIZZA CONDET')); lines.push(center(copyType==='Kasir'?'STRUK KASIR':'STRUK PEMBELI')); lines.push('');
+    lines.push(formatLine('No. Antrian:', `#${queueNumber}`)); lines.push(formatLine('Kasir:', currentUser?currentUser.email:'-')); lines.push(formatLine('Waktu:', new Date().toLocaleString('id-ID'))); lines.push('-'.repeat(MAX_CHARS_58MM));
+    for(const it of items){
+      const priceStr = formatRpNumber(it.finalPrice);
+      const wraps = wrapText(it.name, MAX_CHARS_58MM);
+      const first = wraps.shift() || '';
+      lines.push(formatItemLine(first, it.qty, priceStr));
+      for(const rem of wraps) lines.push(rem);
+      if(it.discountAmount && it.discountAmount>0) lines.push(formatLine('Diskon Item','-'+formatRpNumber(it.discountAmount)));
+    }
+    lines.push('-'.repeat(MAX_CHARS_58MM));
+    if(totalDiscount && totalDiscount>0) lines.push(formatLine('Diskon Total','-'+formatRpNumber(totalDiscount)));
+    lines.push(formatLine('Subtotal', formatRpNumber(subtotal)));
+    lines.push(formatLine('TOTAL', formatRpNumber(finalTotal)));
+    lines.push(formatLine('Metode', paymentMethod));
+    if(paymentMethod && paymentMethod.toLowerCase()==='cash'){
+      lines.push(formatLine('Bayar', formatRpNumber(bayar)));
+      lines.push(formatLine('Kembali', formatRpNumber(kembali)));
+    }
+    if(note){ lines.push('-'.repeat(MAX_CHARS_58MM)); lines.push('Catatan:'); wrapText(note, MAX_CHARS_58MM).forEach(l=>lines.push(l)); }
+    lines.push(''); lines.push(center('TERIMA KASIH')); lines.push('');
+    if(btCharacteristic && btDevice && btDevice.gatt.connected){
+      try{ await printToBluetooth(lines); console.log('[Printer] Cetak via Bluetooth berhasil'); return true; }catch(e){ console.warn('[Printer] Cetak BT gagal, fallback', e); }
+    } else console.log('[Printer] Belum terhubung, fallback ke window.print()');
+    const w = window.open('','_blank'); w.document.write(`<pre style="font-family: monospace; font-size:11px; width:58mm;">${lines.join('\n')}</pre>`); w.print(); return false;
+  }catch(err){ console.error('printStruk override error',err); alert('Gagal mencetak: '+(err.message||err)); return false; }
+};
+
+// expose
+window.connectPrinter = connectPrinter;
+window.disconnectPrinter = disconnectPrinter;
+window.setPrinterStatus = setPrinterStatus;
+setPrinterStatus('Terputus', false);
+</script>
+<!-- === END RP20n BLUETOOTH + ESC/POS MODULE === -->
 </body>
 </html>
