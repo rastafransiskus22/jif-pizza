@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dimdim Dino POS</title>
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<style>
+:root{
+  --green:#1f9d55;
+  --green-dark:#157347;
+}
+
+*{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
+body{background:#f4f6f8}
+
+/* LOGIN */
+.login{
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:linear-gradient(135deg,#1f9d55,#157347)
+}
+.login-box{
+  background:#fff;
+  padding:24px;
+  border-radius:16px;
+  width:90%;
+  max-width:360px;
+}
+.login-box h2{text-align:center;margin-bottom:16px}
+.login-box input{
+  width:100%;
+  padding:12px;
+  margin-bottom:12px;
+}
+.login-box button{
+  width:100%;
+  padding:12px;
+  background:var(--green);
+  color:#fff;
+  border:none;
+  border-radius:8px;
+}
+
+/* APP */
+#app{display:none}
+.header{
+  background:var(--green);
+  color:#fff;
+  padding:14px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+}
+.total{
+  background:var(--green);
+  color:#fff;
+  margin:14px;
+  padding:18px;
+  border-radius:14px;
+  text-align:center;
+  font-size:24px;
+}
+.card{
+  background:#fff;
+  margin:14px;
+  padding:14px;
+  border-radius:12px;
+}
+.pay{
+  position:fixed;
+  bottom:14px;
+  left:14px;
+  right:14px;
+  background:var(--green-dark);
+  color:#fff;
+  padding:16px;
+  border:none;
+  border-radius:14px;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<!-- LOGIN -->
+<div class="login" id="login">
+  <div class="login-box">
+    <h2>Dimdim Dino POS</h2>
+    <input id="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button onclick="login()">Masuk</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <b>Dimdim Dino</b>
+    <button onclick="connectPrinter()">🖨️</button>
+  </div>
+
+  <div class="total">Rp <span id="total">0</span></div>
+
+  <div class="card">
+    <button onclick="addItem()">Tambah Item Dummy</button>
+  </div>
+
+  <button class="pay" onclick="pay()">BAYAR & CETAK</button>
+</div>
+
+<script>
+/* FIREBASE */
+firebase.initializeApp({
+  apiKey: "AIzaSyBhpVyTN5cF_jOuHsGusPaW0PBqoHlv0lg",
+  authDomain: "dimdim-dino-pos.firebaseapp.com",
+  projectId: "dimdim-dino-pos"
+});
+const auth=firebase.auth();
+
+/* LOGIN */
+function login(){
+  auth.signInWithEmailAndPassword(
+    email.value,password.value
+  ).catch(e=>alert(e.message));
+}
+auth.onAuthStateChanged(u=>{
+  if(u){
+    login.style.display="none";
+    app.style.display="block";
+  }
+});
+
+/* KASIR */
+let total=0;
+function addItem(){
+  total+=10000;
+  document.getElementById("total").innerText=total.toLocaleString();
+}
+
+/* PRINTER */
+let charac=null;
+async function connectPrinter(){
+  const device=await navigator.bluetooth.requestDevice({
+    acceptAllDevices:true,
+    optionalServices:[0xFFE0]
+  });
+  const server=await device.gatt.connect();
+  const service=await server.getPrimaryService(0xFFE0);
+  charac=await service.getCharacteristic(0xFFE1);
+  alert("Printer terhubung");
+}
+
+/* STRUK */
+function getQueue(){
+  const d=new Date().toISOString().slice(0,10);
+  let q=JSON.parse(localStorage.q||'{}');
+  if(q.d!==d){q={d, n:1}}else q.n++;
+  localStorage.q=JSON.stringify(q);
+  return String(q.n).padStart(4,'0');
+}
+
+async function pay(){
+  if(!charac){alert("Printer belum terhubung");return}
+  const no=getQueue();
+  let text=
+`DIMDIM DINO
+----------------------------
+No : ${no}
+----------------------------
+TOTAL         ${total.toLocaleString()}
+----------------------------
+Terima kasih
+
+`;
+  await charac.writeValue(new TextEncoder().encode(text));
+  total=0;
+  document.getElementById("total").innerText=0;
+}
+</script>
+
+</body>
+</html>
